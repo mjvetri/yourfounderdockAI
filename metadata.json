@@ -1,0 +1,7 @@
+{
+  "name": "YourFounderDock",
+  "description": "The ultimate MVP building assistant for founders. Turn ideas into structured products with AI guidance.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
