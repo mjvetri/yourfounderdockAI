@@ -32,6 +32,7 @@ Table Editor: `profiles`, `ideas`, `validations`, `roadmap_items`,
 
 ### 3. Deploy the edge functions
 From this project's root folder:
+
 ```bash
 npm install -g supabase
 supabase login

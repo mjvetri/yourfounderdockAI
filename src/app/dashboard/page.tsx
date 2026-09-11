@@ -1,8 +1,15 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Plus, ArrowUpRight, Clock, CheckCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
+
+const BarChart = lazy(() => import('recharts').then(({ BarChart }) => ({ default: BarChart })));
+const Bar = lazy(() => import('recharts').then(({ Bar }) => ({ default: Bar })));
+const XAxis = lazy(() => import('recharts').then(({ XAxis }) => ({ default: XAxis })));
+const YAxis = lazy(() => import('recharts').then(({ YAxis }) => ({ default: YAxis })));
+const CartesianGrid = lazy(() => import('recharts').then(({ CartesianGrid }) => ({ default: CartesianGrid })));
+const Tooltip = lazy(() => import('recharts').then(({ Tooltip }) => ({ default: Tooltip })));
+const ResponsiveContainer = lazy(() => import('recharts').then(({ ResponsiveContainer }) => ({ default: ResponsiveContainer })));
 
 const data = [
   { name: 'Mon', tasks: 4 },
@@ -55,15 +62,17 @@ const DashboardHome = () => {
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
           <h3 className="text-lg font-bold text-slate-900 mb-6">Productivity Tracker</h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
-                <Bar dataKey="tasks" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={32} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div className="h-full flex items-center justify-center text-sm text-slate-400">Loading chart...</div>}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                  <Bar dataKey="tasks" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Suspense>
           </div>
         </div>
 

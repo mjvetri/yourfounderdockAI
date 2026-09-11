@@ -10,6 +10,16 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              recharts: ['recharts'],
+              'lucide-react': ['lucide-react'],
+            },
+          },
+        },
+      },
       // Gemini key define block removed — Vite's built-in VITE_ prefix
       // handling already exposes VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY
       // to the client safely (they're meant to be public), no extra
