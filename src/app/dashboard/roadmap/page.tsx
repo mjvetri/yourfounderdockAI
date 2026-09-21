@@ -1,174 +1,272 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import { CheckCircle, Circle, ArrowRight, Flag, Calendar, Cpu, Smartphone, Settings, Box, Truck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Circle, Loader2, RefreshCw, Sparkles, Target } from 'lucide-react';
+import { generateRoadmap, getRoadmap, listIdeas, toggleRoadmapTask } from '../../../lib/api';
 
-type RoadmapType = 'software' | 'hardware';
+type Idea = {
+  id: string;
+  title: string;
+  description: string;
+  category: 'software' | 'hardware';
+  status?: string;
+};
+
+type RoadmapTask = { title: string; desc: string; done: boolean };
+type RoadmapPhase = {
+  id?: string;
+  title: string;
+  status: string;
+  items: RoadmapTask[];
+};
 
 const RoadmapPage = () => {
-  const [activeType, setActiveType] = useState<RoadmapType>('software');
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [selectedIdeaId, setSelectedIdeaId] = useState<string>('');
+  const [phases, setPhases] = useState<RoadmapPhase[]>([]);
+  const [loadingIdeas, setLoadingIdeas] = useState(true);
+  const [loadingRoadmap, setLoadingRoadmap] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState('');
 
-  const softwarePhases = [
-    {
-      id: 1,
-      title: "Phase 1: Validation & Discovery",
-      status: "completed",
-      items: [
-        { title: "Define User Persona & Pain Points", done: true, desc: "Create 3 detailed user avatars." },
-        { title: "Competitor Matrix Analysis", done: true, desc: "Analyze features/pricing of top 5 competitors." },
-        { title: "Landing Page Pre-sales", done: true, desc: "Collect 50 emails before writing code." },
-        { title: "Technical Feasibility Study", done: true, desc: "Confirm API availability and complexity." }
-      ]
-    },
-    {
-      id: 2,
-      title: "Phase 2: UX/UI & Prototyping",
-      status: "active",
-      items: [
-        { title: "User Flow Diagrams", done: true, desc: "Map out the happy path and edge cases." },
-        { title: "Low-Fidelity Wireframes", done: true, desc: "Sketch layout without styling." },
-        { title: "High-Fidelity Design (Figma)", done: false, desc: "Apply branding and interactions." },
-        { title: "Clickable Prototype Testing", done: false, desc: "Validate flow with 5 real users." },
-      ]
-    },
-    {
-      id: 3,
-      title: "Phase 3: Development (MVP)",
-      status: "pending",
-      items: [
-        { title: "Database Schema Design", done: false, desc: "PostgreSQL/Firebase schema setup." },
-        { title: "Authentication System", done: false, desc: "Login/Signup/Reset Password flows." },
-        { title: "Core Feature API Development", done: false, desc: "Backend logic for main value prop." },
-        { title: "Frontend Implementation", done: false, desc: "React/Next.js components integration." },
-      ]
-    },
-    {
-      id: 4,
-      title: "Phase 4: Launch & Iterate",
-      status: "pending",
-      items: [
-        { title: "Production Deployment (Vercel/AWS)", done: false, desc: "CI/CD pipelines and domain setup." },
-        { title: "Analytics Integration", done: false, desc: "PostHog/Google Analytics setup." },
-        { title: "Public Launch on ProductHunt", done: false, desc: "Prepare marketing assets and tagline." },
-      ]
+  const selectedIdea = ideas.find((idea) => idea.id === selectedIdeaId) ?? null;
+
+  const loadIdeas = async () => {
+    try {
+      const data = await listIdeas();
+      setIdeas(data ?? []);
+      if ((data ?? []).length > 0) {
+        setSelectedIdeaId((current) => current || data[0].id);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Unable to load ideas.');
+    } finally {
+      setLoadingIdeas(false);
     }
-  ];
+  };
 
-  const hardwarePhases = [
-    {
-      id: 1,
-      title: "Phase 1: Concept & Feasibility",
-      status: "completed",
-      items: [
-        { title: "Industrial Design Sketches", done: true, desc: "Form factor exploration." },
-        { title: "Bill of Materials (BOM) Estimation", done: true, desc: "Initial component cost analysis." },
-        { title: "Component Sourcing Strategy", done: true, desc: "Identify key chipsets/sensors." },
-      ]
-    },
-    {
-      id: 2,
-      title: "Phase 2: Proof of Concept (PoC)",
-      status: "active",
-      items: [
-        { title: "Breadboard Electronics Prototype", done: true, desc: "Verify circuit logic." },
-        { title: "3D Printed Enclosure", done: true, desc: "Fit check components." },
-        { title: "Firmware Basics", done: false, desc: "Hello World and driver tests." },
-        { title: "Works-Like Prototype Demo", done: false, desc: "Functional demo for investors." },
-      ]
-    },
-    {
-      id: 3,
-      title: "Phase 3: EVT (Engineering Validation)",
-      status: "pending",
-      items: [
-        { title: "Custom PCB Design (Altium/KiCad)", done: false, desc: "Schematic capture and layout." },
-        { title: "Mechanical Engineering (CAD)", done: false, desc: "Injection molding ready designs." },
-        { title: "Assemble 10-20 Units", done: false, desc: "Internal testing for functionality." },
-        { title: "Thermal & Power Testing", done: false, desc: "Ensure safety and battery life." },
-      ]
-    },
-    {
-      id: 4,
-      title: "Phase 4: DVT & PVT (Production Prep)",
-      status: "pending",
-      items: [
-        { title: "Tooling & Mold Creation", done: false, desc: "Steel molds for mass production." },
-        { title: "Regulatory Certification (FCC/CE)", done: false, desc: "Radio and safety compliance." },
-        { title: "Pilot Run (100 units)", done: false, desc: "Validate assembly line process." },
-        { title: "Packaging Design", done: false, desc: "Retail box and manuals." },
-      ]
+  const loadRoadmap = async (ideaId: string) => {
+    setLoadingRoadmap(true);
+    try {
+      const rows = await getRoadmap(ideaId);
+      const mapped: RoadmapPhase[] = (rows ?? []).map((row: any) => ({
+        id: row.id,
+        title: row.phase,
+        status: row.phase.toLowerCase().includes('phase 1') ? 'active' : 'pending',
+        items: Array.isArray(row.tasks) ? row.tasks : [],
+      }));
+      setPhases(mapped);
+      setError('');
+    } catch (err: any) {
+      setError(err?.message || 'Unable to load roadmap.');
+      setPhases([]);
+    } finally {
+      setLoadingRoadmap(false);
     }
-  ];
+  };
 
-  const phases = activeType === 'software' ? softwarePhases : hardwarePhases;
+  useEffect(() => {
+    loadIdeas();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedIdeaId) return;
+    loadRoadmap(selectedIdeaId);
+  }, [selectedIdeaId]);
+
+  const handleGenerateRoadmap = async () => {
+    if (!selectedIdeaId || !selectedIdea) return;
+    setGenerating(true);
+    try {
+      await generateRoadmap(selectedIdea.id, selectedIdea.description, selectedIdea.category);
+      await loadRoadmap(selectedIdea.id);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to generate the roadmap.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleToggleTask = async (phase: RoadmapPhase, taskIndex: number) => {
+    if (!phase.id) return;
+
+    const updatedTasks = phase.items.map((item, idx) =>
+      idx === taskIndex ? { ...item, done: !item.done } : item
+    );
+
+    try {
+      await toggleRoadmapTask(phase.id, updatedTasks, taskIndex);
+      setPhases((current) =>
+        current.map((p) =>
+          p.id === phase.id ? { ...p, items: updatedTasks } : p
+        )
+      );
+    } catch (err: any) {
+      setError(err?.message || 'Unable to update task.');
+    }
+  };
+
+  const totalTasks = phases.reduce((sum, phase) => sum + phase.items.length, 0);
+  const completedTasks = phases.reduce(
+    (sum, phase) => sum + phase.items.filter((task) => task.done).length,
+    0
+  );
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Product Roadmap</h1>
-          <p className="text-slate-500 mt-1">Detailed step-by-step guide for your {activeType} product.</p>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI-generated roadmap
+          </div>
+          <h1 className="text-3xl font-bold text-slate-900">Startup roadmap</h1>
+          <p className="mt-1 text-slate-500">Build a plan based on the real idea and category in your workspace.</p>
         </div>
-        
-        <div className="bg-slate-100 p-1 rounded-lg flex items-center">
-            <button 
-                onClick={() => setActiveType('software')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeType === 'software' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-500 hover:text-slate-700'}`}
+
+        <div className="flex items-center gap-3">
+          {ideas.length > 0 && (
+            <select
+              value={selectedIdeaId}
+              onChange={(e) => setSelectedIdeaId(e.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-primary-500"
             >
-                <Smartphone className="w-4 h-4" /> Software
-            </button>
-            <button 
-                onClick={() => setActiveType('hardware')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${activeType === 'hardware' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-                <Cpu className="w-4 h-4" /> Hardware
-            </button>
+              {ideas.map((idea) => (
+                <option key={idea.id} value={idea.id}>{idea.title}</option>
+              ))}
+            </select>
+          )}
+
+          <button
+            type="button"
+            onClick={handleGenerateRoadmap}
+            disabled={generating || !selectedIdea || loadingIdeas}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-60"
+          >
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {phases.length > 0 ? 'Regenerate Roadmap' : 'Generate AI Roadmap'}
+          </button>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {phases.map((phase) => (
-          <div key={phase.id} className={`bg-white rounded-xl border ${phase.status === 'active' ? 'border-primary-200 shadow-md ring-1 ring-primary-100' : 'border-slate-200 shadow-sm'} overflow-hidden transition-all duration-300`}>
-            <div className={`p-4 border-b flex flex-wrap justify-between items-center ${phase.status === 'active' ? 'bg-primary-50 border-primary-100' : 'bg-slate-50 border-slate-200'}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    phase.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                    phase.status === 'active' ? 'bg-primary-600 text-white' : 'bg-slate-200 text-slate-500'
-                }`}>
-                    {phase.id}
-                </div>
-                <h3 className={`font-bold ${phase.status === 'active' ? 'text-primary-900' : 'text-slate-900'}`}>{phase.title}</h3>
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {selectedIdea && (
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
+                <Target className="h-5 w-5" />
               </div>
-              <div className="flex items-center gap-2 text-xs font-medium px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-500 mt-2 sm:mt-0">
-                <Calendar className="w-3 h-3" />
-                <span>Est. 2-4 weeks</span>
-              </div>
-            </div>
-            <div className="p-4">
-              <div className="space-y-1">
-                {phase.items.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer group">
-                    {item.done ? (
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    ) : (
-                        <Circle className="w-5 h-5 text-slate-300 group-hover:text-primary-500 flex-shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                        <span className={`block font-medium ${item.done ? 'text-slate-500 line-through' : 'text-slate-800'}`}>{item.title}</span>
-                        <span className="text-xs text-slate-400">{item.desc}</span>
-                    </div>
-                  </div>
-                ))}
+              <div>
+                <p className="text-sm text-slate-500">Selected idea</p>
+                <p className="text-lg font-bold text-slate-900">{selectedIdea.title}</p>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-      
-      <div className="mt-8 flex justify-end">
-        <button className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors">
-            <Flag className="w-4 h-4" /> Update Roadmap Status
-        </button>
-      </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-green-50 p-2 text-green-600">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Completed tasks</p>
+                <p className="text-lg font-bold text-slate-900">{completedTasks} / {totalTasks}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-violet-50 p-2 text-violet-600">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Category</p>
+                <p className="text-lg font-bold text-slate-900 capitalize">{selectedIdea.category}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loadingIdeas || loadingRoadmap ? (
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-10 text-slate-500">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          Loading roadmap...
+        </div>
+      ) : !selectedIdea ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-600">
+          Create an idea first to generate a roadmap.
+        </div>
+      ) : phases.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
+          <p className="text-lg font-semibold text-slate-800">No roadmap generated yet</p>
+          <p className="mt-2 text-slate-500">Generate an AI roadmap for this idea to get a realistic phase-by-phase plan.</p>
+          <button
+            type="button"
+            onClick={handleGenerateRoadmap}
+            disabled={generating}
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-60"
+          >
+            {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            Generate Roadmap
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {phases.map((phase, phaseIndex) => (
+            <div key={`${phase.title}-${phaseIndex}`} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${phase.status === 'active' ? 'bg-primary-50 text-primary-700' : 'bg-slate-100 text-slate-600'}`}>
+                    {phase.status === 'active' ? 'Active' : 'Upcoming'}
+                  </span>
+                  <h2 className="mt-3 text-xl font-bold text-slate-900">{phase.title}</h2>
+                </div>
+
+                <p className="text-sm text-slate-500">
+                  {phase.items.filter((item) => item.done).length}/{phase.items.length} complete
+                </p>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {phase.items.map((item, itemIndex) => (
+                  <button
+                    type="button"
+                    key={`${phase.title}-${item.title}`}
+                    onClick={() => handleToggleTask(phase, itemIndex)}
+                    className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
+                      item.done
+                        ? 'border-green-200 bg-green-50/60'
+                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                    }`}
+                  >
+                    {item.done ? (
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
+                    ) : (
+                      <Circle className="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400" />
+                    )}
+
+                    <div>
+                      <p className={`font-semibold ${item.done ? 'text-slate-900 line-through decoration-slate-400' : 'text-slate-800'}`}>
+                        {item.title}
+                      </p>
+                      <p className={`mt-1 text-sm ${item.done ? 'text-slate-500' : 'text-slate-600'}`}>
+                        {item.desc}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </DashboardLayout>
   );
 };

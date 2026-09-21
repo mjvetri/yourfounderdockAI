@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { Lightbulb, Target, Code2, AlertTriangle, ArrowRight, Save, Loader2 } from 'lucide-react';
-import { generateMVPAdvice } from '../../../lib/api';
+import { createIdea, generateMVPAdvice } from '../../../lib/api';
 
 const IdeaUploadPage = () => {
   const [step, setStep] = useState(1);
   const [ideaText, setIdeaText] = useState('');
+  const [ideaCategory, setIdeaCategory] = useState<'software' | 'hardware'>('software');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
 
   const handleAnalysis = async () => {
     setIsAnalyzing(true);
     try {
-      // Mocking the parse since the real API might return markdown block around JSON
-      const rawJson = await generateMVPAdvice(ideaText);
-      // Basic cleanup if the model returns markdown code blocks
-      const jsonString = rawJson.replace(/```json|```/g, '').trim();
-      const result = JSON.parse(jsonString);
+      const title = ideaText.split(/[.!?\n]/)[0].trim().slice(0, 80) || 'Untitled startup idea';
+      const idea = await createIdea(title, ideaText.trim(), ideaCategory);
+      const result = await generateMVPAdvice(ideaText.trim(), idea.id);
       setAnalysisResult(result);
       setStep(3); // Go to results
     } catch (error) {
@@ -56,6 +55,21 @@ const IdeaUploadPage = () => {
               value={ideaText}
               onChange={(e) => setIdeaText(e.target.value)}
             ></textarea>
+
+            <div className="mb-6 text-left">
+              <label htmlFor="idea-category" className="mb-2 block text-sm font-semibold text-slate-700">
+                Product category
+              </label>
+              <select
+                id="idea-category"
+                value={ideaCategory}
+                onChange={(e) => setIdeaCategory(e.target.value as 'software' | 'hardware')}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="software">Software / SaaS</option>
+                <option value="hardware">Hardware / Physical product</option>
+              </select>
+            </div>
 
             <button
               onClick={() => setStep(2)}

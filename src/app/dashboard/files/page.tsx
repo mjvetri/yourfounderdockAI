@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { Folder, FileText, Image, MoreVertical, UploadCloud, Trash2, Download } from 'lucide-react';
 
@@ -8,9 +8,12 @@ interface FileItem {
   size: string;
   type: 'folder' | 'pdf' | 'image' | 'doc';
   date: string;
+  source?: File;
 }
 
 const FilesPage = () => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   const [files, setFiles] = useState<FileItem[]>([
     { id: '1', name: 'Pitch Deck.pdf', size: '2.4 MB', type: 'pdf', date: 'Oct 12, 2024' },
     { id: '2', name: 'Logo Assets', size: '-', type: 'folder', date: 'Oct 10, 2024' },
@@ -20,12 +23,62 @@ const FilesPage = () => {
 
   const [dragActive, setDragActive] = useState(false);
 
+  const formatFileSize = (size: number) => {
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileType = (name: string): FileItem['type'] => {
+    const lower = name.toLowerCase();
+    if (lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg') || lower.endsWith('.gif') || lower.endsWith('.webp')) return 'image';
+    if (lower.endsWith('.pdf')) return 'pdf';
+    if (lower.endsWith('.doc') || lower.endsWith('.docx')) return 'doc';
+    return 'doc';
+  };
+
+  const addFiles = (incomingFiles: FileList | File[]) => {
+    const nextFiles = Array.from(incomingFiles);
+    if (nextFiles.length === 0) return;
+
+    const mappedFiles: FileItem[] = nextFiles.map((file) => ({
+      id: `${Date.now()}-${file.name}-${Math.random().toString(16).slice(2)}`,
+      name: file.name,
+      size: formatFileSize(file.size),
+      type: getFileType(file.name),
+      date: 'Just now',
+      source: file,
+    }));
+
+    setFiles((currentFiles) => [...mappedFiles, ...currentFiles]);
+  };
+
+  const openFile = (file: FileItem) => {
+    const previewText = [
+      `Document: ${file.name}`,
+      `Created: ${file.date}`,
+      '',
+      'This is a preview of the selected file.',
+      'The file can be opened in a browser tab for quick review.',
+      '',
+      'In a real app, this would render the actual document content or PDF file.',
+    ].join('\n');
+
+    const previewBlob = file.source
+      ? file.source
+      : new Blob([previewText], { type: file.type === 'image' ? 'image/png' : 'text/plain' });
+
+    const previewUrl = file.source ? URL.createObjectURL(file.source) : URL.createObjectURL(previewBlob);
+
+    window.open(previewUrl, '_blank', 'noopener,noreferrer');
+  };
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   };
@@ -34,21 +87,18 @@ const FilesPage = () => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      // Simulate upload
-      const newFile: FileItem = {
-        id: Date.now().toString(),
-        name: e.dataTransfer.files[0].name,
-        size: '1.0 MB', // Mock size
-        type: 'doc',
-        date: 'Just now'
-      };
-      setFiles([newFile, ...files]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      addFiles(e.dataTransfer.files);
+      e.dataTransfer.clearData();
     }
   };
 
+  const triggerUpload = () => {
+    inputRef.current?.click();
+  };
+
   const deleteFile = (id: string) => {
-    setFiles(files.filter(f => f.id !== id));
+    setFiles((currentFiles) => currentFiles.filter((file) => file.id !== id));
   };
 
   const getIcon = (type: string) => {
@@ -73,25 +123,35 @@ const FilesPage = () => {
                 <p className="text-xs text-slate-500 font-medium">Storage Used</p>
                 <p className="text-sm font-bold text-slate-800">2.1 GB / 10 GB</p>
             </div>
-            <button 
-                onClick={() => document.getElementById('file-upload')?.click()}
+            <button
+                type="button"
+                onClick={triggerUpload}
                 className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
             >
                 <UploadCloud className="w-5 h-5" /> Upload
             </button>
-            <input id="file-upload" type="file" className="hidden" onChange={(e) => {
-                 if (e.target.files && e.target.files[0]) {
-                    setFiles([{ id: Date.now().toString(), name: e.target.files[0].name, size: '2 MB', type: 'doc', date: 'Just now' }, ...files]);
-                 }
-            }} />
+            <input
+                ref={inputRef}
+                id="file-upload"
+                type="file"
+                className="hidden"
+                multiple
+                onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        addFiles(e.target.files);
+                        e.target.value = '';
+                    }
+                }}
+            />
         </div>
       </div>
 
       {/* Drag Drop Zone */}
-      <div 
-        className={`mb-8 border-2 border-dashed rounded-xl p-10 text-center transition-colors ${
+      <div
+        className={`mb-8 border-2 border-dashed rounded-xl p-10 text-center transition-colors cursor-pointer ${
             dragActive ? 'border-primary-500 bg-primary-50' : 'border-slate-300 hover:bg-slate-50'
         }`}
+        onClick={triggerUpload}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -104,10 +164,14 @@ const FilesPage = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {files.map((file) => (
-            <div key={file.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group relative">
+            <div
+                key={file.id}
+                onClick={() => openFile(file)}
+                className="cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group relative"
+            >
                 <div className="flex justify-between items-start mb-4">
                     {getIcon(file.type)}
-                    <div className="relative">
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
                         <button className="text-slate-400 hover:text-slate-600">
                             <MoreVertical className="w-5 h-5" />
                         </button>
@@ -116,7 +180,7 @@ const FilesPage = () => {
                              <button className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 rounded flex items-center gap-2">
                                 <Download className="w-3 h-3" /> Download
                              </button>
-                             <button 
+                             <button
                                 onClick={() => deleteFile(file.id)}
                                 className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
                              >

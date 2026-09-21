@@ -1,6 +1,7 @@
 
 import React, { lazy, Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import RequireAuth from './src/RequireAuth';
 
 // Pages
 const LandingPage = lazy(() => import('./src/app/(landing)/page'));
@@ -41,17 +42,17 @@ const App = () => {
           <Route path="/signup" element={<SignupPage />} />
           
           {/* Protected Dashboard Routes */}
-          <Route path="/dashboard" element={<DashboardHome />} />
-          <Route path="/dashboard/idea-upload" element={<IdeaUploadPage />} />
-          <Route path="/dashboard/ideas" element={<IdeasPage />} />
-          <Route path="/dashboard/validation" element={<ValidationPage />} />
-          <Route path="/dashboard/chat" element={<ChatPage />} />
-          <Route path="/dashboard/roadmap" element={<RoadmapPage />} />
-          <Route path="/dashboard/progress" element={<ProgressPage />} />
-          <Route path="/dashboard/files" element={<FilesPage />} />
-          <Route path="/dashboard/notifications" element={<NotificationsPage />} />
-          <Route path="/dashboard/billing" element={<BillingPage />} />
-          <Route path="/dashboard/settings" element={<SettingsPage />} />
+          <Route path="/dashboard" element={<RequireAuth><DashboardHome /></RequireAuth>} />
+          <Route path="/dashboard/idea-upload" element={<RequireAuth><IdeaUploadPage /></RequireAuth>} />
+          <Route path="/dashboard/ideas" element={<RequireAuth><IdeasPage /></RequireAuth>} />
+          <Route path="/dashboard/validation" element={<RequireAuth><ValidationPage /></RequireAuth>} />
+          <Route path="/dashboard/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+          <Route path="/dashboard/roadmap" element={<RequireAuth><RoadmapPage /></RequireAuth>} />
+          <Route path="/dashboard/progress" element={<RequireAuth><ProgressPage /></RequireAuth>} />
+          <Route path="/dashboard/files" element={<RequireAuth><FilesPage /></RequireAuth>} />
+          <Route path="/dashboard/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
+          <Route path="/dashboard/billing" element={<RequireAuth><BillingPage /></RequireAuth>} />
+          <Route path="/dashboard/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
