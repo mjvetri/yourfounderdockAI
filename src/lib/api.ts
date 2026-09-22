@@ -149,6 +149,51 @@ export async function chatWithFounderBot(ideaId: string | null, message: string)
   return data.reply as string;
 }
 
+export async function listKanbanTasks() {
+  const { data, error } = await supabase
+    .from("kanban_tasks")
+    .select("*")
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function createKanbanTask(
+  tag: string,
+  title: string,
+  status: 'todo' | 'in-progress' | 'done' = 'todo'
+) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const { data, error } = await supabase
+    .from("kanban_tasks")
+    .insert({ user_id: user.id, tag, title, status })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateKanbanTaskStatus(
+  taskId: string,
+  status: 'todo' | 'in-progress' | 'done'
+) {
+  const { error } = await supabase
+    .from("kanban_tasks")
+    .update({ status })
+    .eq("id", taskId);
+  if (error) throw error;
+}
+
+export async function deleteKanbanTask(taskId: string) {
+  const { error } = await supabase
+    .from("kanban_tasks")
+    .delete()
+    .eq("id", taskId);
+  if (error) throw error;
+}
+
 // ---------------------------------------------------------------------------
 // Roadmap — add these to your existing src/lib/api.ts (don't replace the
 // whole file, just add these functions alongside what's already there)

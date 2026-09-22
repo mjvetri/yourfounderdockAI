@@ -1,28 +1,29 @@
 
 import React, { useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import { Target, Users, FileText, Globe, Loader2, ArrowRight, Check, Copy } from 'lucide-react';
+import { Target, Users, FileText, Loader2, Check, Copy, AlertCircle } from 'lucide-react';
 import { generateMarketValidation } from '../../../lib/api';
 
-type TabType = 'competitors' | 'interviews' | 'surveys' | 'landing';
+type TabType = 'competitors' | 'interviews' | 'surveys';
 
 const ValidationPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('competitors');
   const [ideaContext, setIdeaContext] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<any>(null);
+    const [error, setError] = useState('');
 
   const handleGenerate = async () => {
     if (!ideaContext.trim()) return;
     setIsLoading(true);
     setResults(null);
+        setError('');
     try {
-      const rawJson = await generateMarketValidation(activeTab, ideaContext);
-      // Simple cleanup in case the model adds markdown code blocks
-      const jsonString = rawJson.replace(/```json|```/g, '').trim();
-      setResults(JSON.parse(jsonString));
-    } catch (error) {
-      console.error(error);
+            const result = await generateMarketValidation(activeTab, ideaContext);
+            setResults(result);
+        } catch (error: any) {
+            console.error(error);
+            setError(error?.message || 'Could not generate validation results.');
     } finally {
       setIsLoading(false);
     }
@@ -32,7 +33,6 @@ const ValidationPage = () => {
     { id: 'competitors', label: 'Competitor Analysis', icon: Target, desc: 'Find gaps in the market and analyze rivals.' },
     { id: 'interviews', label: 'Customer Interviews', icon: Users, desc: 'Generate scripts to talk to potential users.' },
     { id: 'surveys', label: 'Survey Builder', icon: FileText, desc: 'Create questions to validate assumptions at scale.' },
-    { id: 'landing', label: 'Landing Page', icon: Globe, desc: 'Generate high-converting copy to test demand.' },
   ];
 
   return (
@@ -44,6 +44,13 @@ const ValidationPage = () => {
         </h1>
         <p className="text-slate-500 mt-1">Test your idea before writing a single line of code.</p>
       </div>
+
+            {error && (
+                <div className="mb-6 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-md p-3">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Sidebar: Controls */}
@@ -237,50 +244,6 @@ const ValidationPage = () => {
                     </div>
                 )}
 
-                {results && activeTab === 'landing' && (
-                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                         <div>
-                            <h2 className="text-2xl font-bold text-slate-900 mb-2">Landing Page Generator</h2>
-                            <p className="text-slate-500">High-converting copy structure.</p>
-                        </div>
-
-                        <div className="border-2 border-slate-900 rounded-xl overflow-hidden shadow-2xl">
-                            {/* Mock Browser Header */}
-                            <div className="bg-slate-900 p-3 flex gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                            </div>
-                            
-                            {/* Hero Section */}
-                            <div className="bg-white p-10 text-center border-b border-slate-100">
-                                <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">{results.headline}</h1>
-                                <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">{results.subheadline}</p>
-                                <button className="bg-primary-600 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg shadow-primary-500/30">
-                                    {results.cta}
-                                </button>
-                                <div className="mt-8 p-4 bg-slate-100 rounded-lg text-xs text-slate-400 font-mono max-w-lg mx-auto border border-dashed border-slate-300">
-                                    IMG PROMPT: {results.heroImagePrompt}
-                                </div>
-                            </div>
-
-                            {/* Features */}
-                            <div className="bg-slate-50 p-10">
-                                <div className="grid md:grid-cols-3 gap-6">
-                                    {results.benefits.map((b: any, i: number) => (
-                                        <div key={i} className="text-center">
-                                            <div className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-primary-600 font-bold">
-                                                <Check className="w-5 h-5" />
-                                            </div>
-                                            <h4 className="font-bold text-slate-900 mb-2">{b.title}</h4>
-                                            <p className="text-sm text-slate-600">{b.description}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </div>
       </div>

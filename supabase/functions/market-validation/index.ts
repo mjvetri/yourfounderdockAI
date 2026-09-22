@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
   if (preflight) return preflight;
 
   try {
-    await getAuthedUser(req); // just verifying the caller is logged in
+    const { user, supabase } = await getAuthedUser(req);
     const { type, idea } = await req.json();
 
     const validTypes: ValidationType[] = ["competitors", "interviews", "surveys", "landing"];
@@ -63,6 +63,14 @@ Deno.serve(async (req) => {
     }
 
     const result = await callGeminiJSON(buildPrompt(type, idea));
+
+    const { error: insertError } = await supabase.from("market_validations").insert({
+      user_id: user.id,
+      type,
+      context: idea,
+      result,
+    });
+    if (insertError) throw insertError;
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
