@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { Lightbulb, Target, Code2, AlertTriangle, ArrowRight, Save, Loader2 } from 'lucide-react';
-import { createIdea, generateMVPAdvice } from '../../../lib/api';
+import { createIdea, generateMVPAdvice, saveRoadmapNextSteps } from '../../../lib/api';
 
 const IdeaUploadPage = () => {
   const [step, setStep] = useState(1);
@@ -9,6 +9,10 @@ const IdeaUploadPage = () => {
   const [ideaCategory, setIdeaCategory] = useState<'software' | 'hardware'>('software');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [savedIdea, setSavedIdea] = useState<any>(null);
+  const [savingRoadmap, setSavingRoadmap] = useState(false);
+  const [roadmapSaved, setRoadmapSaved] = useState(false);
+  const [error, setError] = useState('');
 
   const handleAnalysis = async () => {
     setIsAnalyzing(true);
@@ -16,7 +20,9 @@ const IdeaUploadPage = () => {
       const title = ideaText.split(/[.!?\n]/)[0].trim().slice(0, 80) || 'Untitled startup idea';
       const idea = await createIdea(title, ideaText.trim(), ideaCategory);
       const result = await generateMVPAdvice(ideaText.trim(), idea.id);
+      setSavedIdea(idea);
       setAnalysisResult(result);
+      setRoadmapSaved(false);
       setStep(3); // Go to results
     } catch (error) {
       console.error("Failed to analyze", error);
@@ -26,9 +32,45 @@ const IdeaUploadPage = () => {
     }
   };
 
+  const handleSaveToRoadmap = async () => {
+    if (!analysisResult || !savedIdea) return;
+
+    const rawSteps = Array.isArray(analysisResult.nextSteps)
+      ? analysisResult.nextSteps
+      : analysisResult.nextSteps
+        ? [analysisResult.nextSteps]
+        : [];
+    const tasks = rawSteps.map((step: any) => ({
+      title: String(step),
+      desc: '',
+      done: false,
+    }));
+
+    if (tasks.length === 0) {
+      setRoadmapSaved(true);
+      return;
+    }
+
+    setSavingRoadmap(true);
+    try {
+      await saveRoadmapNextSteps(savedIdea.id, tasks);
+      setRoadmapSaved(true);
+    } catch (e: any) {
+      setError(e.message || 'Could not save to roadmap.');
+    } finally {
+      setSavingRoadmap(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto">
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Progress Stepper */}
         <div className="flex justify-between items-center mb-10 relative">
           <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 -z-10"></div>
@@ -154,9 +196,18 @@ const IdeaUploadPage = () => {
               </div>
             </div>
 
-            <button className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-600/20 flex items-center justify-center gap-2">
-                <Save className="w-5 h-5" /> Save to Roadmap
+            <button
+              type="button"
+              onClick={handleSaveToRoadmap}
+              disabled={savingRoadmap || roadmapSaved}
+              className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-600/20 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+                {savingRoadmap ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                {savingRoadmap ? 'Saving...' : roadmapSaved ? 'Saved to Roadmap' : 'Save to Roadmap'}
             </button>
+            {roadmapSaved && (
+              <p className="text-center text-sm text-green-700">Your immediate next steps are now available on the Roadmap page.</p>
+            )}
           </div>
         )}
       </div>

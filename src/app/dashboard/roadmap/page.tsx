@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { ArrowRight, CheckCircle2, Circle, Loader2, RefreshCw, Sparkles, Target } from 'lucide-react';
-import { generateRoadmap, getRoadmap, listIdeas, toggleRoadmapTask } from '../../../lib/api';
+import { generateRoadmap, getRoadmap, listIdeas, recalculateIdeaProgress, toggleRoadmapTask } from '../../../lib/api';
 
 type Idea = {
   id: string;
@@ -94,7 +94,8 @@ const RoadmapPage = () => {
     );
 
     try {
-      await toggleRoadmapTask(phase.id, updatedTasks, taskIndex);
+      await toggleRoadmapTask(phase.id, phase.items, taskIndex);
+      await recalculateIdeaProgress(selectedIdeaId);
       setPhases((current) =>
         current.map((p) =>
           p.id === phase.id ? { ...p, items: updatedTasks } : p

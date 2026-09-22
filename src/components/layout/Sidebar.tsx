@@ -1,10 +1,18 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { LayoutDashboard, Lightbulb, Map, TrendingUp, MessageSquare, Bell, FileText, Settings, CreditCard, Anchor, Target } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { getMyProfile } from '../../lib/api';
 
 const Sidebar = () => {
   const location = useLocation();
+  const [profile, setProfile] = useState<{ name: string; plan: string; avatar_url?: string | null } | null>(null);
+
+  useEffect(() => {
+    getMyProfile().then(setProfile).catch((error) => {
+      console.error('Failed to load profile', error);
+    });
+  }, []);
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -70,13 +78,20 @@ const Sidebar = () => {
       </div>
 
       <div className="p-4 border-t border-slate-800">
-        <div className="flex items-center gap-3 p-2">
-          <img src="https://picsum.photos/40/40" alt="Profile" className="w-10 h-10 rounded-full ring-2 ring-primary-500" />
+        <Link
+          to="/dashboard/settings"
+          className="flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+        >
+          <img
+            src={profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.name || 'Founder')}&background=2563eb&color=fff&size=40`}
+            alt="Profile"
+            className="w-10 h-10 rounded-full ring-2 ring-primary-500 object-cover"
+          />
           <div className="flex-1 overflow-hidden">
-            <p className="text-sm font-medium text-white truncate">Alex Founder</p>
-            <p className="text-xs text-slate-400 truncate">Pro Plan</p>
+            <p className="text-sm font-medium text-white truncate">{profile?.name || 'Founder'}</p>
+            <p className="text-xs text-slate-400 truncate">{profile?.plan || 'Free'} Plan</p>
           </div>
-        </div>
+        </Link>
       </div>
     </aside>
   );

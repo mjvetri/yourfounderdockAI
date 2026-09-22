@@ -1,7 +1,8 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import { Plus, ArrowUpRight, Clock, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getMyProfile } from '../../lib/api';
 
 const BarChart = lazy(() => import('recharts').then(({ BarChart }) => ({ default: BarChart })));
 const Bar = lazy(() => import('recharts').then(({ Bar }) => ({ default: Bar })));
@@ -22,11 +23,19 @@ const data = [
 ];
 
 const DashboardHome = () => {
+  const [profile, setProfile] = useState<{ name: string; plan: string } | null>(null);
+
+  useEffect(() => {
+    getMyProfile().then(setProfile).catch((error) => {
+      console.error('Failed to load profile', error);
+    });
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Welcome back, Alex 👋</h1>
+          <h1 className="text-3xl font-bold text-slate-900">Welcome back, {profile?.name || 'Founder'} 👋</h1>
           <p className="text-slate-500 mt-1">Here is what's happening with your startups today.</p>
         </div>
         <Link to="/dashboard/idea-upload" className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 shadow-sm transition-all">

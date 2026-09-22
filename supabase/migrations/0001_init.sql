@@ -81,6 +81,7 @@ create policy "own roadmap items" on public.roadmap_items
 create policy "own chat messages" on public.chat_messages
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+
 -- Auto-create a profile row whenever a new user signs up
 create or replace function public.handle_new_user()
 returns trigger as $$
