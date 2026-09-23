@@ -149,6 +149,128 @@ export async function chatWithFounderBot(ideaId: string | null, message: string)
   return data.reply as string;
 }
 
+export async function createChatSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .insert({ user_id: user.id })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listChatSessions() {
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getSessionMessages(sessionId: string) {
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("*")
+    .eq("session_id", sessionId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function sendMessageToSession(sessionId: string, message: string) {
+  const { data, error } = await supabase.functions.invoke("founder-chat", {
+    body: { sessionId, message },
+  });
+  if (error) throw error;
+  return data.reply as string;
+}
+
+export async function deleteChatSession(sessionId: string) {
+  const { error } = await supabase.from("chat_sessions").delete().eq("id", sessionId);
+  if (error) throw error;
+}
+
+export async function createNotification(type: string, title: string, message: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase.from("notifications").insert({ user_id: user.id, type, title, message });
+  if (error) throw error;
+}
+
+export async function listNotifications() {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function markNotificationRead(id: string) {
+  const { error } = await supabase.from("notifications").update({ read: true }).eq("id", id);
+  if (error) throw error;
+}
+
+export async function markAllNotificationsRead() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", user.id)
+    .eq("read", false);
+  if (error) throw error;
+}
+
+export async function deleteNotification(id: string) {
+  const { error } = await supabase.from("notifications").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function getDashboardStats() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const [ideasRes, tasksRes, chatRes] = await Promise.all([
+    supabase.from("ideas").select("id, title, created_at").eq("user_id", user.id),
+    supabase.from("kanban_tasks").select("id, title, status, created_at").eq("user_id", user.id),
+    supabase.from("chat_messages").select("id, created_at").eq("user_id", user.id).eq("role", "user"),
+  ]);
+
+  if (ideasRes.error) throw ideasRes.error;
+  if (tasksRes.error) throw tasksRes.error;
+  if (chatRes.error) throw chatRes.error;
+
+  const ideas = ideasRes.data || [];
+  const tasks = tasksRes.data || [];
+  const chats = chatRes.data || [];
+  const tasksDone = tasks.filter((task: any) => task.status === 'done').length;
+  const upcomingMilestones = tasks.filter((task: any) => task.status !== 'done').length;
+
+  const recentActivity = [
+    ...ideas.map((item: any) => ({ label: `New idea: ${item.title}`, time: item.created_at })),
+    ...tasks
+      .filter((item: any) => item.status === 'done')
+      .map((item: any) => ({ label: `Completed: ${item.title}`, time: item.created_at })),
+    ...chats.map((item: any) => ({ label: 'New AI Chat Session', time: item.created_at })),
+  ]
+    .filter((activity) => activity.time)
+    .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+    .slice(0, 4);
+
+  return {
+    activeProjects: ideas.length,
+    tasksDone,
+    tasksTotal: tasks.length,
+    upcomingMilestones,
+    recentActivity,
+  };
+}
+
 export async function listKanbanTasks() {
   const { data, error } = await supabase
     .from("kanban_tasks")

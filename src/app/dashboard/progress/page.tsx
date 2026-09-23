@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { Plus, GripVertical, CheckCircle, Clock, Circle, Loader2, AlertCircle, Trash2 } from 'lucide-react';
-import { listKanbanTasks, createKanbanTask, updateKanbanTaskStatus, deleteKanbanTask } from '../../../lib/api';
+import { createNotification, listKanbanTasks, createKanbanTask, updateKanbanTaskStatus, deleteKanbanTask } from '../../../lib/api';
 
 interface Task {
   id: string;
@@ -35,6 +35,10 @@ const ProgressPage = () => {
     setError('');
     try {
       await updateKanbanTaskStatus(taskId, newStatus);
+      if (newStatus === 'done') {
+        const task = tasks.find((item) => item.id === taskId);
+        await createNotification('task', 'Task Completed', `You marked "${task?.title}" as done.`);
+      }
     } catch (e: any) {
       setTasks(previousTasks);
       setError('Could not save that move.');

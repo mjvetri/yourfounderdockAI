@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { ArrowRight, CheckCircle2, Circle, Loader2, RefreshCw, Sparkles, Target } from 'lucide-react';
-import { generateRoadmap, getRoadmap, listIdeas, recalculateIdeaProgress, toggleRoadmapTask } from '../../../lib/api';
+import { createNotification, generateRoadmap, getRoadmap, listIdeas, recalculateIdeaProgress, toggleRoadmapTask } from '../../../lib/api';
 
 type Idea = {
   id: string;
@@ -78,6 +78,7 @@ const RoadmapPage = () => {
     setGenerating(true);
     try {
       await generateRoadmap(selectedIdea.id, selectedIdea.description, selectedIdea.category);
+      await createNotification('roadmap', 'Roadmap Generated', `Your MVP roadmap for "${selectedIdea.title}" is ready.`);
       await loadRoadmap(selectedIdea.id);
     } catch (err: any) {
       setError(err?.message || 'Unable to generate the roadmap.');

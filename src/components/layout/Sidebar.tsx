@@ -22,7 +22,7 @@ const Sidebar = () => {
     { icon: Target, label: 'Validation', path: '/dashboard/validation' },
     { icon: Map, label: 'MVP Roadmap', path: '/dashboard/roadmap' },
     { icon: TrendingUp, label: 'Progress', path: '/dashboard/progress' },
-    { icon: MessageSquare, label: 'AI Advisor', path: '/dashboard/chat' },
+    { icon: MessageSquare, label: 'DockMind', path: '/dashboard/chat' },
     { icon: FileText, label: 'Files', path: '/dashboard/files' },
   ];
 
