@@ -4,13 +4,15 @@ import { ArrowRight, CheckCircle, Rocket, Anchor, Cpu, Users, Layers, Wrench, Pl
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-[#F7F9FC] text-slate-900">
       {/* Navbar */}
-      <header className="fixed w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
+      <header className="fixed w-full bg-[#F7F9FC]/85 backdrop-blur-xl border-b border-slate-200/80 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl text-slate-900">
-            <Anchor className="w-8 h-8 text-primary-600" />
-            <span>YourFounderDock</span>
+          <Link to="/" className="flex items-center gap-3 font-bold text-xl text-slate-900">
+            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-600 text-white shadow-lg shadow-primary-600/20">
+              <Anchor className="w-5 h-5" />
+            </span>
+            <span className="tracking-tight">YourFounderDock</span>
           </Link>
           <nav className="hidden md:flex gap-8">
             <Link to="/features" className="text-slate-600 hover:text-primary-600 font-medium">Features</Link>
@@ -18,9 +20,9 @@ const LandingPage = () => {
             <Link to="/pricing" className="text-slate-600 hover:text-primary-600 font-medium">Pricing</Link>
             <Link to="/about" className="text-slate-600 hover:text-primary-600 font-medium">About Founder</Link>
           </nav>
-          <div className="flex gap-4">
-            <Link to="/login" className="px-4 py-2 text-slate-700 font-medium hover:text-slate-900">Login</Link>
-            <Link to="/signup" className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors">
+          <div className="flex items-center gap-2">
+            <Link to="/login" className="hidden sm:block px-4 py-2 text-slate-600 font-medium hover:text-slate-900">Login</Link>
+            <Link to="/signup" className="px-4 py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm">
               Get Started
             </Link>
           </div>
@@ -28,24 +30,25 @@ const LandingPage = () => {
       </header>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 text-primary-700 text-sm font-medium">
+      <section className="relative pt-32 pb-24 px-4 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,#DBEAFE_0%,transparent_42%)]" />
+        <div className="relative max-w-5xl mx-auto text-center space-y-8">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-primary-100 text-primary-700 text-sm font-semibold shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
             </span>
             Now supporting Hardware & Software MVPs
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-tight">
-            Your Dock for Building <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-indigo-600">World-Class Products</span>
+          <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[1.05]">
+            Build the product<br/>
+            <span className="text-primary-600">you can’t stop thinking about.</span>
           </h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Whether you're coding an app or prototyping a device, YourFounderDock provides the structured roadmaps, blueprints, and AI guidance to get from zero to one.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link to="/signup" className="px-8 py-4 bg-primary-600 text-white rounded-xl font-bold text-lg hover:bg-primary-700 transition-transform hover:-translate-y-1 flex items-center gap-2 justify-center shadow-lg shadow-primary-500/20">
+            <Link to="/signup" className="px-8 py-4 bg-primary-600 text-white rounded-xl font-bold text-lg hover:bg-primary-700 transition-transform hover:-translate-y-1 flex items-center gap-2 justify-center shadow-xl shadow-primary-600/25">
               Launch Your Product <ArrowRight className="w-5 h-5" />
             </Link>
             <Link to="/how-it-works" className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-lg hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
@@ -54,7 +57,7 @@ const LandingPage = () => {
           </div>
         </div>
         
-        <div className="mt-16 max-w-6xl mx-auto rounded-2xl shadow-2xl border border-slate-200 overflow-hidden bg-slate-900 relative">
+        <div className="relative mt-16 max-w-6xl mx-auto rounded-2xl shadow-2xl shadow-slate-900/15 border border-slate-200 overflow-hidden bg-slate-900">
            <div className="p-4 bg-slate-800 flex gap-2">
              <div className="w-3 h-3 rounded-full bg-red-500"></div>
              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>

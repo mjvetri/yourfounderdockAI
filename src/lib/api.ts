@@ -31,6 +31,18 @@ export async function getCurrentUser() {
   return data.user;
 }
 
+export async function createServiceLead(sessionId: string | null, reason: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const { error } = await supabase.from("service_leads").insert({
+    user_id: user.id,
+    session_id: sessionId,
+    reason,
+  });
+  if (error) throw error;
+}
+
 export async function getMyProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;

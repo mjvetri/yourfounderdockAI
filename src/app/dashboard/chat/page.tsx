@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import { Bot, Send, Sparkles, Loader2, PanelRightClose, PanelRightOpen, Plus, Trash2, MessageSquare } from 'lucide-react';
-import { createChatSession, createNotification, listChatSessions, getSessionMessages, sendMessageToSession, deleteChatSession } from '../../../lib/api';
+import { Bot, Send, Sparkles, Loader2, PanelRightClose, PanelRightOpen, Plus, Trash2, MessageSquare, Copy, Check } from 'lucide-react';
+import { createChatSession, createNotification, createServiceLead, listChatSessions, getSessionMessages, sendMessageToSession, deleteChatSession } from '../../../lib/api';
 
 interface Message {
   id: string;
@@ -13,6 +13,137 @@ interface Session {
   id: string;
   title: string;
   updated_at: string;
+}
+
+function CodeBlock({ language, code }: { language: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="rounded-lg overflow-hidden border border-slate-700 my-2">
+      <div className="flex justify-between items-center bg-slate-800 px-3 py-1.5">
+        <span className="text-xs text-slate-400">{language || 'code'}</span>
+        <button type="button" onClick={handleCopy} className="text-slate-400 hover:text-white flex items-center gap-1 text-xs">
+          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          {copied ? 'Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre className="bg-slate-900 text-slate-100 text-xs p-3 overflow-x-auto"><code>{code}</code></pre>
+    </div>
+  );
+}
+
+interface Connection { from: string; to: string; label: string; }
+
+function CircuitDiagram({ connections }: { connections: Connection[] }) {
+  if (!connections || connections.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-lg border border-slate-200 p-4 my-2 space-y-3">
+      {connections.map((connection, index) => (
+        <div key={index} className="flex items-center gap-2 text-sm flex-wrap">
+          <span className="px-2.5 py-1.5 rounded-md bg-slate-100 text-slate-800 font-medium">{connection.from}</span>
+          <div className="flex items-center gap-1 text-slate-400">
+            <span className="h-px w-4 bg-slate-300" />
+            <span className="text-[10px] font-semibold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">{connection.label}</span>
+            <span className="h-px w-4 bg-slate-300" />
+            <span>→</span>
+          </div>
+          <span className="px-2.5 py-1.5 rounded-md bg-slate-100 text-slate-800 font-medium">{connection.to}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ServiceOfferCard({ reason, sessionId }: { reason: string; sessionId: string | null }) {
+  const [status, setStatus] = useState<'idle' | 'saving' | 'sent'>('idle');
+
+  const handleConfirm = async () => {
+    setStatus('saving');
+    try {
+      await createServiceLead(sessionId, reason);
+      setStatus('sent');
+    } catch {
+      setStatus('idle');
+    }
+  };
+
+  if (status === 'sent') {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 my-2 text-sm">
+        <p className="font-medium text-green-800 mb-1">Please reach out to our team to get started.</p>
+        <p className="text-green-700">Kindly contact us at <a href="mailto:yourfounder@team.com" className="underline font-medium">yourfounder@team.com</a> and we will help build it for you.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 my-2">
+      <p className="text-sm text-primary-900 mb-3">
+        Sounds like this part might be easier to hand off. Our YourFounder team will build it for you — want us to reach out?
+      </p>
+      <button
+        type="button"
+        onClick={handleConfirm}
+        disabled={status === 'saving'}
+        className="text-sm font-medium bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+      >
+        {status === 'saving' ? 'Sending...' : 'Yes, have your team contact me'}
+      </button>
+    </div>
+  );
+}
+
+function renderInlineMarkdown(text: string) {
+  const segments = text.split(/\*\*(.+?)\*\*/g);
+  return segments.map((segment, index) => (
+    index % 2 === 1
+      ? <strong key={index}>{segment}</strong>
+      : <React.Fragment key={index}>{segment}</React.Fragment>
+  ));
+}
+
+function MessageContent({ text, sessionId }: { text: string; sessionId: string | null }) {
+  const parts = text.split(/```([\w-]*)[ \t]*\r?\n([\s\S]*?)```/g);
+  const rendered: React.ReactNode[] = [];
+
+  for (let i = 0; i < parts.length; i += 3) {
+    const plain = parts[i];
+    if (plain?.trim()) {
+      rendered.push(
+        <p key={`t-${i}`} className="whitespace-pre-wrap">{renderInlineMarkdown(plain.trim())}</p>
+      );
+    }
+    const language = parts[i + 1];
+    const code = parts[i + 2];
+    if (code !== undefined) {
+      if (language === 'circuit') {
+        try {
+          const connections: Connection[] = JSON.parse(code.trim());
+          rendered.push(<CircuitDiagram key={`ckt-${i}`} connections={connections} />);
+        } catch {
+          rendered.push(<CodeBlock key={`ckt-err-${i}`} language="circuit" code={code.trim()} />);
+        }
+      } else if (language === 'service-offer') {
+        try {
+          const { reason } = JSON.parse(code.trim());
+          rendered.push(<ServiceOfferCard key={`offer-${i}`} reason={reason} sessionId={sessionId} />);
+        } catch {
+          // Skip malformed service offers rather than showing implementation details.
+        }
+      } else {
+        rendered.push(<CodeBlock key={`c-${i}`} language={language} code={code.trim()} />);
+      }
+    }
+  }
+
+  return <>{rendered}</>;
 }
 
 const ChatPage = () => {
@@ -150,7 +281,13 @@ const ChatPage = () => {
             {messages.map((message) => (
               <div key={message.id} className={`flex items-start gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 {message.role === 'model' && <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0"><Bot className="w-4 h-4 text-white" /></div>}
-                <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'bg-slate-100 text-slate-800 rounded-tr-sm' : 'bg-primary-600 text-white rounded-tl-sm'}`}>{message.text}</div>
+                <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'bg-slate-100 text-slate-800 rounded-tr-sm' : 'bg-primary-600 text-white rounded-tl-sm'}`}>
+                  {message.role === 'model' ? (
+                    <MessageContent text={message.text} sessionId={activeSessionId} />
+                  ) : (
+                    message.text
+                  )}
+                </div>
               </div>
             ))}
             {sending && <div className="flex items-start gap-3"><div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0"><Bot className="w-4 h-4 text-white" /></div><div className="bg-primary-600 text-white rounded-2xl rounded-tl-sm px-4 py-3"><Loader2 className="w-4 h-4 animate-spin" /></div></div>}

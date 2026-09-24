@@ -5,12 +5,21 @@ const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const MODEL = "gemini-2.5-flash";
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
+async function fetchWithRetry(url: string, options: RequestInit, retries = 2, delayMs = 1000): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status !== 503 || attempt === retries) return res;
+    await new Promise((resolve) => setTimeout(resolve, delayMs * (attempt + 1)));
+  }
+  throw new Error("Unreachable");
+}
+
 export async function callGeminiJSON(prompt: string): Promise<any> {
   if (!GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY is not configured on the server.");
   }
 
-  const res = await fetch(`${ENDPOINT}?key=${GEMINI_API_KEY}`, {
+  const res = await fetchWithRetry(`${ENDPOINT}?key=${GEMINI_API_KEY}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -44,7 +53,7 @@ export async function callGeminiChat(
 
   const contents = [...history, { role: "user", parts: [{ text: message }] }];
 
-  const res = await fetch(`${ENDPOINT}?key=${GEMINI_API_KEY}`, {
+  const res = await fetchWithRetry(`${ENDPOINT}?key=${GEMINI_API_KEY}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

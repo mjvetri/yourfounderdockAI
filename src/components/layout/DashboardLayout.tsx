@@ -10,7 +10,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, fullScreen 
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <Sidebar />
-      <main className={`flex-1 ml-64 min-h-screen overflow-y-auto ${fullScreen ? '' : 'p-8'}`}>
+      <main className={`flex-1 ml-0 lg:ml-64 min-h-screen overflow-y-auto ${fullScreen ? '' : 'p-5 sm:p-8'}`}>
         <div className={fullScreen ? 'min-h-screen' : 'max-w-7xl mx-auto'}>
           {children}
         </div>
