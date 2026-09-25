@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import { Lightbulb, Plus, MoreVertical, ArrowRight, Loader2, AlertCircle, Cpu, Smartphone } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Lightbulb, Plus, MoreVertical, ArrowRight, Loader2, AlertCircle, Cpu, Smartphone, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { listIdeas } from '../../../lib/api';
 
 interface Idea {
@@ -24,6 +24,7 @@ const IdeasPage = () => {
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     listIdeas()
@@ -45,9 +46,19 @@ const IdeasPage = () => {
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">My Ideas</h1>
-          <p className="text-slate-500 mt-1">Manage and track your startup concepts.</p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Ideas Lab </h1>
+            <p className="text-slate-500 mt-1">Manage and track your startup concepts.</p>
+          </div>
         </div>
         <Link
           to="/dashboard/idea-upload"
@@ -98,7 +109,7 @@ const IdeasPage = () => {
                 <span className="flex items-center gap-1.5 text-sm text-slate-600">
                   <span className={`w-2 h-2 rounded-full ${status.color}`} /> {status.label}
                 </span>
-                <Link to="/dashboard/roadmap" className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
+                <Link to={`/dashboard/roadmap/${idea.id}`} className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:underline">
                   View Roadmap <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

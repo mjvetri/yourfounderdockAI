@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { LayoutDashboard, Lightbulb, Map, TrendingUp, MessageSquare, Bell, FileText, Settings, CreditCard, Anchor, Target, ChevronRight, Sparkles } from 'lucide-react';
+import { LayoutDashboard, Lightbulb, Map, TrendingUp, MessageSquare, Bell, FileText, Settings, CreditCard, Anchor, Target, ChevronRight, Sparkles, KanbanSquare, Eye, Users } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { getMyProfile } from '../../lib/api';
 
@@ -18,7 +18,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: Lightbulb, label: 'My Ideas', path: '/dashboard/ideas' },
+    { icon: Lightbulb, label: 'Ideas Lab', path: '/dashboard/ideas' },
     { icon: Target, label: 'Validation', path: '/dashboard/validation' },
     { icon: Map, label: 'MVP Roadmap', path: '/dashboard/roadmap' },
     { icon: TrendingUp, label: 'Progress', path: '/dashboard/progress' },
@@ -30,6 +30,12 @@ const Sidebar = () => {
     { icon: Bell, label: 'Notifications', path: '/dashboard/notifications' },
     { icon: CreditCard, label: 'Billing', path: '/dashboard/billing' },
     { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+  ];
+
+  const canvasItems = [
+    { icon: KanbanSquare, label: 'Lean Canvas', path: '/dashboard/lean-canvas' },
+    { icon: Eye, label: 'Vision Board', path: '/dashboard/vision-board' },
+    { icon: Users, label: 'Team Canvas', path: '/dashboard/team-canvas' },
   ];
 
   return (
@@ -65,6 +71,23 @@ const Sidebar = () => {
             <ChevronRight className={`w-3.5 h-3.5 transition-opacity ${isActive(item.path) ? 'opacity-100 text-primary-300' : 'opacity-0 group-hover:opacity-60'}`} />
           </Link>
         ))}
+
+        <div className="mt-8 pt-6 border-t border-slate-800/80">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.18em] mb-3 px-3">Strategy</p>
+          {canvasItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              aria-current={isActive(item.path) ? 'page' : undefined}
+              className={`group relative flex items-center gap-3 px-3 py-2.5 mb-1 rounded-xl transition-all ${isActive(item.path) ? 'bg-primary-600/15 text-white' : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-100'}`}
+            >
+              {isActive(item.path) && <span className="absolute left-0 top-2.5 bottom-2.5 w-0.5 rounded-full bg-primary-400" />}
+              <item.icon className={`w-[18px] h-[18px] ${isActive(item.path) ? 'text-primary-300' : 'text-slate-500 group-hover:text-slate-300'}`} />
+              <span className="text-sm font-medium flex-1">{item.label}</span>
+              <ChevronRight className={`w-3.5 h-3.5 transition-opacity ${isActive(item.path) ? 'opacity-100 text-primary-300' : 'opacity-0 group-hover:opacity-60'}`} />
+            </Link>
+          ))}
+        </div>
 
         <div className="mt-8 pt-6 border-t border-slate-800/80">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.18em] mb-3 px-3">Account</p>

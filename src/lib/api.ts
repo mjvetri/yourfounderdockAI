@@ -43,6 +43,51 @@ export async function createServiceLead(sessionId: string | null, reason: string
   if (error) throw error;
 }
 
+export async function createCanvas(type: 'lean' | 'vision' | 'team', title: string, data: Record<string, string>) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+  const { data: row, error } = await supabase
+    .from("canvases")
+    .insert({ user_id: user.id, type, title, data })
+    .select()
+    .single();
+  if (error) throw error;
+  return row;
+}
+
+export async function updateCanvasData(canvasId: string, data: Record<string, string>, title?: string) {
+  const updates: { data: Record<string, string>; updated_at: string; title?: string } = {
+    data,
+    updated_at: new Date().toISOString(),
+  };
+  if (title) updates.title = title;
+  const { error } = await supabase.from("canvases").update(updates).eq("id", canvasId);
+  if (error) throw error;
+}
+
+export async function listCanvases(type: 'lean' | 'vision' | 'team') {
+  const { data, error } = await supabase
+    .from("canvases")
+    .select("*")
+    .eq("type", type)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function analyzeCanvas(canvasId: string, type: 'lean' | 'vision' | 'team', data: Record<string, string>) {
+  const { data: result, error } = await supabase.functions.invoke("analyze-canvas", {
+    body: { canvasId, type, data },
+  });
+  if (error) throw error;
+  return result.analysis;
+}
+
+export async function deleteCanvas(canvasId: string) {
+  const { error } = await supabase.from("canvases").delete().eq("id", canvasId);
+  if (error) throw error;
+}
+
 export async function getMyProfile() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;

@@ -1,16 +1,35 @@
-import React, { useEffect, useRef, useState } from 'react';
-import mermaid from 'mermaid';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { Cpu, Smartphone, Sparkles, Loader2, AlertCircle, AlertTriangle, Code2 } from 'lucide-react';
 import { listIdeas, generateMvpBuild, getMvpBuild } from '../../../lib/api';
-
-mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
 
 interface Idea {
   id: string;
   title: string;
   description: string;
   category: 'software' | 'hardware';
+}
+
+interface Connection { from: string; to: string; label: string; }
+
+function CircuitDiagram({ connections }: { connections: Connection[] }) {
+  if (!connections || connections.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      {connections.map((c, i) => (
+        <div key={i} className="flex items-center gap-2 text-sm flex-wrap">
+          <span className="px-2.5 py-1.5 rounded-md bg-slate-100 text-slate-800 font-medium">{c.from}</span>
+          <div className="flex items-center gap-1 text-slate-400">
+            <span className="h-px w-4 bg-slate-300" />
+            <span className="text-[10px] font-semibold text-primary-600 bg-primary-50 px-1.5 py-0.5 rounded">{c.label}</span>
+            <span className="h-px w-4 bg-slate-300" />
+            <span>→</span>
+          </div>
+          <span className="px-2.5 py-1.5 rounded-md bg-slate-100 text-slate-800 font-medium">{c.to}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 const MvpBuilderPage = () => {
@@ -20,7 +39,6 @@ const MvpBuilderPage = () => {
   const [loadingIdeas, setLoadingIdeas] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
-  const diagramRef = useRef<HTMLDivElement>(null);
 
   const selectedIdea = ideas.find((i) => i.id === selectedIdeaId);
 
@@ -42,22 +60,6 @@ const MvpBuilderPage = () => {
       .then((row: any) => setBuild(row))
       .catch((e) => setError(e.message));
   }, [selectedIdeaId]);
-
-  useEffect(() => {
-    if (build?.category === 'hardware' && build.result?.wiringDiagram && diagramRef.current) {
-      mermaid
-        .render('mvp-wiring-diagram', build.result.wiringDiagram)
-        .then(({ svg }) => {
-          if (diagramRef.current) diagramRef.current.innerHTML = svg;
-        })
-        .catch(() => {
-          if (diagramRef.current) {
-            diagramRef.current.innerHTML =
-              '<p class="text-sm text-red-500">Could not render the diagram. Try regenerating.</p>';
-          }
-        });
-    }
-  }, [build]);
 
   const handleGenerate = async () => {
     if (!selectedIdea) return;
@@ -175,7 +177,7 @@ const MvpBuilderPage = () => {
 
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
             <h3 className="font-bold text-slate-900 mb-3">Wiring Diagram</h3>
-            <div ref={diagramRef} className="overflow-x-auto flex justify-center py-4" />
+            <CircuitDiagram connections={build.result.wiringDiagram} />
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">

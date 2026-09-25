@@ -147,7 +147,7 @@ const DashboardHome = () => {
                 const barColor = idea.category === 'hardware' ? 'bg-orange-500' : 'bg-primary-600';
                 const progress = Math.max(0, Math.min(100, idea.progress || 0));
                 return (
-                  <Link key={idea.id} to="/dashboard/roadmap" className="block rounded-xl border border-slate-100 bg-slate-50/60 p-4 hover:border-slate-200 hover:bg-slate-50 transition-colors">
+                  <Link key={idea.id} to={`/dashboard/roadmap/${idea.id}`} className="block rounded-xl border border-slate-100 bg-slate-50/60 p-4 hover:border-slate-200 hover:bg-slate-50 transition-colors">
                     <div className="flex justify-between items-start gap-4 mb-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className={`rounded-lg p-2 ${idea.category === 'hardware' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-primary-600'}`}>

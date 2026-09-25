@@ -26,6 +26,9 @@ const FilesPage = lazy(() => import('./src/app/dashboard/files/page'));
 const ProgressPage = lazy(() => import('./src/app/dashboard/progress/page'));
 const IdeasPage = lazy(() => import('./src/app/dashboard/ideas/page'));
 const ValidationPage = lazy(() => import('./src/app/dashboard/validation/page'));
+const LeanCanvasPage = lazy(() => import('./src/app/dashboard/lean-canvas/page'));
+const VisionBoardPage = lazy(() => import('./src/app/dashboard/vision-board/page'));
+const TeamCanvasPage = lazy(() => import('./src/app/dashboard/team-canvas/page'));
 
 const App = () => {
   return (
@@ -48,11 +51,15 @@ const App = () => {
           <Route path="/dashboard/validation" element={<RequireAuth><ValidationPage /></RequireAuth>} />
           <Route path="/dashboard/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
           <Route path="/dashboard/roadmap" element={<RequireAuth><RoadmapPage /></RequireAuth>} />
+          <Route path="/dashboard/roadmap/:ideaId" element={<RequireAuth><RoadmapPage /></RequireAuth>} />
           <Route path="/dashboard/progress" element={<RequireAuth><ProgressPage /></RequireAuth>} />
           <Route path="/dashboard/files" element={<RequireAuth><FilesPage /></RequireAuth>} />
           <Route path="/dashboard/notifications" element={<RequireAuth><NotificationsPage /></RequireAuth>} />
           <Route path="/dashboard/billing" element={<RequireAuth><BillingPage /></RequireAuth>} />
           <Route path="/dashboard/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+          <Route path="/dashboard/lean-canvas" element={<RequireAuth><LeanCanvasPage /></RequireAuth>} />
+          <Route path="/dashboard/vision-board" element={<RequireAuth><VisionBoardPage /></RequireAuth>} />
+          <Route path="/dashboard/team-canvas" element={<RequireAuth><TeamCanvasPage /></RequireAuth>} />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
