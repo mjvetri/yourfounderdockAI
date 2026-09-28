@@ -36,6 +36,7 @@ const Sidebar = () => {
     { icon: KanbanSquare, label: 'Lean Canvas', path: '/dashboard/lean-canvas' },
     { icon: Eye, label: 'Vision Board', path: '/dashboard/vision-board' },
     { icon: Users, label: 'Team Canvas', path: '/dashboard/team-canvas' },
+    { icon: Target, label: 'GTM Strategy', path: '/dashboard/gtm-strategy' },
   ];
 
   return (

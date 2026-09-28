@@ -511,3 +511,56 @@ export async function toggleRoadmapTask(
   if (error) throw error;
   return updated;
 }
+
+// ---------------------------------------------------------------------------
+// Go-to-market strategy
+// ---------------------------------------------------------------------------
+export async function getOrCreateGtmStrategy(ideaId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+  const { data: existing, error: existingError } = await supabase.from("gtm_strategies").select("*").eq("idea_id", ideaId).eq("user_id", user.id).maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) return existing;
+  const { data, error } = await supabase.from("gtm_strategies").insert({ user_id: user.id, idea_id: ideaId, setup: {} }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function saveGtmSetup(gtmStrategyId: string, setup: Record<string, string>) {
+  const { error } = await supabase.from("gtm_strategies").update({ setup, updated_at: new Date().toISOString() }).eq("id", gtmStrategyId);
+  if (error) throw error;
+}
+
+export async function generateGtmStrategy(gtmStrategyId: string, ideaId: string, setup: Record<string, string>) {
+  const { data, error } = await supabase.functions.invoke("generate-gtm-strategy", { body: { gtmStrategyId, ideaId, setup } });
+  if (error) throw error;
+  return data.strategy;
+}
+
+export async function updateChannelStatus(gtmStrategyId: string, strategy: any, channelIndex: number, status: string) {
+  const updated = { ...strategy, channels: strategy.channels.map((channel: any, index: number) => index === channelIndex ? { ...channel, status } : channel) };
+  const { error } = await supabase.from("gtm_strategies").update({ strategy: updated, updated_at: new Date().toISOString() }).eq("id", gtmStrategyId);
+  if (error) throw error;
+  return updated;
+}
+
+export async function toggleFirst100Task(gtmStrategyId: string, strategy: any, phaseIndex: number, taskIndex: number) {
+  const updated = { ...strategy, first100: strategy.first100.map((phase: any, index: number) => index === phaseIndex ? { ...phase, tasks: phase.tasks.map((task: any, taskI: number) => taskI === taskIndex ? { ...task, done: !task.done } : task) } : phase) };
+  const { error } = await supabase.from("gtm_strategies").update({ strategy: updated, updated_at: new Date().toISOString() }).eq("id", gtmStrategyId);
+  if (error) throw error;
+  return updated;
+}
+
+export async function addGtmTaskToRoadmap(ideaId: string, taskTitle: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+  const { data: phase, error: phaseError } = await supabase.from("roadmap_items").select("*").eq("idea_id", ideaId).eq("user_id", user.id).eq("phase", "Go-To-Market").maybeSingle();
+  if (phaseError) throw phaseError;
+  if (phase) {
+    const { error } = await supabase.from("roadmap_items").update({ tasks: [...(phase.tasks || []), { title: taskTitle, desc: "", done: false }] }).eq("id", phase.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from("roadmap_items").insert({ idea_id: ideaId, user_id: user.id, phase: "Go-To-Market", tasks: [{ title: taskTitle, desc: "", done: false }] });
+    if (error) throw error;
+  }
+}
