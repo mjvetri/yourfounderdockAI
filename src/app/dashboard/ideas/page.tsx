@@ -56,7 +56,7 @@ const IdeasPage = () => {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Ideas Lab </h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900">Ideas Lab </h1>
             <p className="text-slate-500 mt-1">Manage and track your startup concepts.</p>
           </div>
         </div>
@@ -86,7 +86,7 @@ const IdeasPage = () => {
           const status = STATUS_STYLES[idea.status] || STATUS_STYLES.draft;
           const CategoryIcon = idea.category === 'hardware' ? Cpu : Smartphone;
           return (
-            <div key={idea.id} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex flex-col">
+            <div key={idea.id} className="bg-white rounded-2xl border border-slate-100 shadow-card p-6 flex flex-col">
               <div className="flex justify-between items-start mb-4">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${idea.category === 'hardware' ? 'bg-orange-50' : 'bg-green-50'}`}>
                   <Lightbulb className={`w-5 h-5 ${idea.category === 'hardware' ? 'text-orange-500' : 'text-green-500'}`} />

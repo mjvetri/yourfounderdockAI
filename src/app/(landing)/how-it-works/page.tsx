@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Anchor, Lightbulb, Bot, Map, Rocket, ArrowRight } from 'lucide-react';
+import LandingHeader from '../../../components/layout/LandingHeader';
 
 const HowItWorksPage = () => {
   const steps = [
@@ -29,20 +30,7 @@ const HowItWorksPage = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
         {/* Navbar */}
-      <header className="fixed w-full bg-white/80 backdrop-blur-md border-b border-slate-200 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 font-bold text-xl text-slate-900">
-            <Anchor className="w-8 h-8 text-primary-600" />
-            <span>YourFounderDock</span>
-          </Link>
-          <div className="flex gap-4">
-            <Link to="/login" className="px-4 py-2 text-slate-700 font-medium hover:text-slate-900">Login</Link>
-            <Link to="/signup" className="px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors">
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main className="flex-1 pt-32 pb-20 px-4">
         <div className="max-w-6xl mx-auto">

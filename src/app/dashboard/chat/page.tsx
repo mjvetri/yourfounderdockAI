@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import { Bot, Send, Sparkles, Loader2, PanelRightClose, PanelRightOpen, Plus, Trash2, MessageSquare, Copy, Check } from 'lucide-react';
+import { Bot, Send, Sparkles, Loader2, PanelRightClose, PanelRightOpen, Plus, Trash2, MessageSquare, Copy, Check, X } from 'lucide-react';
 import { createChatSession, createNotification, createServiceLead, listChatSessions, getSessionMessages, sendMessageToSession, deleteChatSession } from '../../../lib/api';
 
 interface Message {
@@ -154,6 +154,7 @@ const ChatPage = () => {
   const [sending, setSending] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [error, setError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -259,7 +260,7 @@ const ChatPage = () => {
     <DashboardLayout fullScreen>
       <div className="flex h-screen bg-white overflow-hidden">
         <div className="flex flex-col flex-1 min-w-0">
-          <div className="flex-shrink-0 flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 sm:px-5 border-b border-slate-100">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-primary-50 flex items-center justify-center">
                 <Bot className="w-5 h-5 text-primary-600" />
@@ -269,19 +270,20 @@ const ChatPage = () => {
                 <span className="flex items-center gap-1 text-xs text-green-600"><span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Online</span>
               </div>
             </div>
-            <button type="button" onClick={() => setSidebarOpen((value) => !value)} className="flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 hover:bg-slate-50 transition-colors">
+            <button type="button" onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 hover:bg-slate-50 transition-colors lg:hidden"><PanelRightOpen className="w-3.5 h-3.5" /> History</button>
+            <button type="button" onClick={() => setSidebarOpen((value) => !value)} className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 rounded-md px-3 py-1.5 hover:bg-slate-50 transition-colors">
               {sidebarOpen ? <PanelRightClose className="w-3.5 h-3.5" /> : <PanelRightOpen className="w-3.5 h-3.5" />} History
             </button>
           </div>
 
           {error && <div className="mx-5 mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5 space-y-4 sm:px-5 sm:py-6">
             {messages.length === 0 && !sending && <div className="h-full flex flex-col items-center justify-center text-center text-slate-400"><Sparkles className="w-8 h-8 mb-3" /><p>Start a new chat or pick one from your history.</p></div>}
             {messages.map((message) => (
               <div key={message.id} className={`flex items-start gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 {message.role === 'model' && <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center flex-shrink-0"><Bot className="w-4 h-4 text-white" /></div>}
-                <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'bg-slate-100 text-slate-800 rounded-tr-sm' : 'bg-primary-600 text-white rounded-tl-sm'}`}>
+                <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${message.role === 'user' ? 'bg-slate-100 text-slate-800 rounded-tr-sm' : 'bg-primary-600 text-white rounded-tl-sm'}`}>
                   {message.role === 'model' ? (
                     <MessageContent text={message.text} sessionId={activeSessionId} />
                   ) : (
@@ -302,7 +304,7 @@ const ChatPage = () => {
           </div>
         </div>
 
-        {sidebarOpen && <div className="w-72 flex-shrink-0 border-l border-slate-100 flex flex-col">
+        {sidebarOpen && <div className="hidden w-72 flex-shrink-0 border-l border-slate-100 lg:flex flex-col">
           <div className="flex-shrink-0 p-4 border-b border-slate-100"><button type="button" onClick={startNewChat} className="w-full flex items-center justify-center gap-2 bg-primary-600 text-white text-sm font-medium py-2 rounded-lg hover:bg-primary-700"><Plus className="w-4 h-4" /> New Chat</button></div>
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {loadingSessions ? <div className="flex justify-center py-6"><Loader2 className="w-4 h-4 animate-spin text-slate-400" /></div> : sessions.length === 0 ? <p className="text-xs text-slate-400 text-center py-6">No chats yet.</p> : sessions.map((session) => (
@@ -313,6 +315,16 @@ const ChatPage = () => {
               </div>
             ))}
           </div>
+        </div>}
+        {mobileSidebarOpen && <div className="fixed inset-0 z-50 flex lg:hidden">
+          <button type="button" aria-label="Close chat history" onClick={() => setMobileSidebarOpen(false)} className="flex-1 bg-slate-900/50" />
+          <aside className="flex w-80 max-w-[85vw] flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 p-4"><span className="text-sm font-bold text-slate-900">Chat History</span><button type="button" onClick={() => setMobileSidebarOpen(false)} aria-label="Close chat history" className="rounded p-1 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div>
+            <div className="border-b border-slate-100 p-4"><button type="button" onClick={() => { startNewChat(); setMobileSidebarOpen(false); }} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 py-2 text-sm font-medium text-white hover:bg-primary-700"><Plus className="h-4 w-4" /> New Chat</button></div>
+            <div className="flex-1 space-y-1 overflow-y-auto p-2">
+              {loadingSessions ? <div className="flex justify-center py-6"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div> : sessions.length === 0 ? <p className="py-6 text-center text-xs text-slate-400">No chats yet.</p> : sessions.map((session) => <div key={session.id} onClick={() => { selectSession(session.id); setMobileSidebarOpen(false); }} className={`group flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-colors ${activeSessionId === session.id ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'}`}><MessageSquare className="h-3.5 w-3.5 shrink-0 opacity-60" /><span className="flex-1 truncate">{session.title}</span><button type="button" onClick={(event) => handleDeleteSession(session.id, event)} aria-label={`Delete ${session.title}`} className="text-slate-300 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button></div>)}
+            </div>
+          </aside>
         </div>}
       </div>
     </DashboardLayout>

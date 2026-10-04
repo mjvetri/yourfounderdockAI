@@ -159,9 +159,9 @@ const ProgressPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Progress Tracker</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900">Progress Tracker</h1>
           <p className="text-slate-500 mt-1">Kanban board for your MVP tasks.</p>
         </div>
         <div className="flex items-center gap-4">
@@ -179,7 +179,7 @@ const ProgressPage = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-12rem)] overflow-x-auto pb-4">
+      <div className="flex flex-col gap-6 pb-4 lg:h-[calc(100vh-12rem)] lg:flex-row lg:overflow-x-auto">
         <Column title="To Do" status="todo" icon={Circle} />
         <Column title="In Progress" status="in-progress" icon={Clock} />
         <Column title="Done" status="done" icon={CheckCircle} />

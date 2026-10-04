@@ -1,33 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Rocket, Anchor, Cpu, Users, Layers, Wrench, PlayCircle } from 'lucide-react';
+import LandingHeader from '../../components/layout/LandingHeader';
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#F7F9FC] text-slate-900">
       {/* Navbar */}
-      <header className="fixed w-full bg-[#F7F9FC]/85 backdrop-blur-xl border-b border-slate-200/80 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 font-bold text-xl text-slate-900">
-            <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary-600 text-white shadow-lg shadow-primary-600/20">
-              <Anchor className="w-5 h-5" />
-            </span>
-            <span className="tracking-tight">YourFounderDock</span>
-          </Link>
-          <nav className="hidden md:flex gap-8">
-            <Link to="/features" className="text-slate-600 hover:text-primary-600 font-medium">Features</Link>
-            <Link to="/how-it-works" className="text-slate-600 hover:text-primary-600 font-medium">How It Works</Link>
-            <Link to="/pricing" className="text-slate-600 hover:text-primary-600 font-medium">Pricing</Link>
-            <Link to="/about" className="text-slate-600 hover:text-primary-600 font-medium">About Founder</Link>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/login" className="hidden sm:block px-4 py-2 text-slate-600 font-medium hover:text-slate-900">Login</Link>
-            <Link to="/signup" className="px-4 py-2.5 bg-slate-900 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-sm">
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero */}
       <section className="relative pt-32 pb-24 px-4 overflow-hidden">
@@ -93,7 +73,7 @@ const LandingPage = () => {
             <p className="text-slate-600 mt-4">A complete ecosystem for product builders.</p>
           </div>
           
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4">
             {[
               { icon: Layers, title: "Dual Roadmaps", desc: "Specialized workflows for Software (Agile) and Hardware (Waterfall/Manufacturing)." },
               { icon: Cpu, title: "Tech & Supply Chain", desc: "AI recommendations for tech stacks and component sourcing strategies." },

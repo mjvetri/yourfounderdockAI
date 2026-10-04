@@ -81,7 +81,7 @@ const NotificationsPage = () => {
     <DashboardLayout>
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 flex items-center gap-2">
             Notifications
             {unreadCount > 0 && <span className="bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">{unreadCount}</span>}
           </h1>

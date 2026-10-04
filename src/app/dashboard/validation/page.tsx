@@ -38,7 +38,7 @@ const ValidationPage = () => {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 flex items-center gap-3">
             <Target className="w-8 h-8 text-primary-600" />
             Market Validation System
         </h1>

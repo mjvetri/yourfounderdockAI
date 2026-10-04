@@ -179,7 +179,7 @@ export default function CanvasWorkspace({ canvasType, pageTitle, pageDescription
           </button>
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-600 mb-2">Strategy workspace</p>
-            <h1 className="text-3xl font-bold text-slate-900">{pageTitle}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900">{pageTitle}</h1>
             <p className="text-slate-500 mt-1 max-w-2xl">{pageDescription}</p>
           </div>
         </div>

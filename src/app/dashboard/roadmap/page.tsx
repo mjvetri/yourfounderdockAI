@@ -141,7 +141,7 @@ const RoadmapPage = () => {
               <Sparkles className="h-3.5 w-3.5" />
               AI-generated roadmap
             </div>
-            <h1 className="text-3xl font-bold text-slate-900">Startup roadmap</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900">Startup roadmap</h1>
             <p className="mt-1 text-slate-500">Build a plan based on the real idea and category in your workspace.</p>
           </div>
         </div>

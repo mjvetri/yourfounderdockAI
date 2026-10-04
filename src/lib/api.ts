@@ -309,15 +309,31 @@ export async function getDashboardStats() {
   const upcomingMilestones = tasks.filter((task: any) => task.status !== 'done').length;
 
   const recentActivity = [
-    ...ideas.map((item: any) => ({ label: `New idea: ${item.title}`, time: item.created_at })),
+    ...ideas.map((item: any) => ({ label: `New idea: ${item.title}`, time: item.created_at, type: 'idea' })),
     ...tasks
       .filter((item: any) => item.status === 'done')
-      .map((item: any) => ({ label: `Completed: ${item.title}`, time: item.created_at })),
-    ...chats.map((item: any) => ({ label: 'New AI Chat Session', time: item.created_at })),
+      .map((item: any) => ({ label: `Completed: ${item.title}`, time: item.created_at, type: 'completed' })),
+    ...chats.map((item: any) => ({ label: 'New AI Chat Session', time: item.created_at, type: 'chat' })),
   ]
     .filter((activity) => activity.time)
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
     .slice(0, 4);
+
+  const activityEvents = [...ideas, ...tasks, ...chats].filter((item: any) => item.created_at);
+  const weeklyActivity = Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() - (6 - offset));
+    const nextDate = new Date(date);
+    nextDate.setDate(nextDate.getDate() + 1);
+    return {
+      day: date.toLocaleDateString(undefined, { weekday: 'short' }),
+      count: activityEvents.filter((item: any) => {
+        const timestamp = new Date(item.created_at).getTime();
+        return timestamp >= date.getTime() && timestamp < nextDate.getTime();
+      }).length,
+    };
+  });
 
   return {
     activeProjects: ideas.length,
@@ -325,6 +341,7 @@ export async function getDashboardStats() {
     tasksTotal: tasks.length,
     upcomingMilestones,
     recentActivity,
+    weeklyActivity,
   };
 }
 

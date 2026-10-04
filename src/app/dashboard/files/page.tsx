@@ -118,7 +118,7 @@ const FilesPage = () => {
     <DashboardLayout>
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">File Storage</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900">File Storage</h1>
           <p className="text-slate-500 mt-1">Manage your project assets and documents.</p>
         </div>
         <div className="flex gap-4 items-center">
@@ -146,7 +146,7 @@ const FilesPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {files.map((file) => {
             const displayType = getDisplayType(file.file_type, file.file_name);
-            return <div key={file.id} onClick={() => openFile(file)} className="cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group relative">
+            return <div key={file.id} onClick={() => openFile(file)} className="cursor-pointer bg-white p-5 rounded-2xl border border-slate-100 shadow-card hover:shadow-md transition-shadow group relative">
               <div className="flex justify-between items-start mb-4">
                 {getIcon(displayType)}
                 <div className="relative" onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === file.id ? null : file.id); }}>

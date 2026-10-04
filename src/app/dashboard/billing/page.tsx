@@ -58,7 +58,7 @@ const BillingPage = () => {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Billing &amp; Subscription</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900">Billing &amp; Subscription</h1>
         <p className="text-slate-500 mt-1">Manage your plan, payment methods, and view invoices.</p>
       </div>
 
