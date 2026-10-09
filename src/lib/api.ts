@@ -43,6 +43,156 @@ export async function createServiceLead(sessionId: string | null, reason: string
   if (error) throw error;
 }
 
+export async function ensureDefaultCommunityChannels() {
+  const { data, error } = await supabase
+    .from("community_channels")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+
+  if ((data ?? []).length > 0) return data;
+
+  const defaults = [
+    { slug: "general", name: "General", description: "Founder introductions and general discussion.", sort_order: 1 },
+    { slug: "feedback", name: "Feedback", description: "Share what is working and what to improve.", sort_order: 2 },
+    { slug: "wins", name: "Wins", description: "Celebrate launches, traction, and product milestones.", sort_order: 3 },
+  ];
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("community_channels")
+    .insert(defaults)
+    .select();
+  if (insertError) throw insertError;
+  return inserted ?? [];
+}
+
+export async function getCommunityChannels() {
+  const { data, error } = await supabase
+    .from("community_channels")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function listCommunityMessages(channelId: string) {
+  const { data, error } = await supabase
+    .from("community_messages")
+    .select("*")
+    .eq("channel_id", channelId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createCommunityMessage(channelId: string, body: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const trimmed = body.trim();
+  if (!trimmed) throw new Error("Message cannot be empty.");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const { data, error } = await supabase
+    .from("community_messages")
+    .insert({
+      channel_id: channelId,
+      user_id: user.id,
+      sender_name: profile?.name || "Founder",
+      sender_avatar: profile?.avatar_url || null,
+      body: trimmed,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listBlockedUsers() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("community_blocks")
+    .select("*")
+    .eq("blocker_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function blockUser(blockedId: string, blockedName?: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const { error } = await supabase
+    .from("community_blocks")
+    .upsert({
+      blocker_id: user.id,
+      blocked_id: blockedId,
+      blocked_name: blockedName || null,
+      created_at: new Date().toISOString(),
+    }, { onConflict: "blocker_id,blocked_id" });
+  if (error) throw error;
+}
+
+export async function unblockUser(blockedId: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in.");
+
+  const { error } = await supabase
+    .from("community_blocks")
+    .delete()
+    .eq("blocker_id", user.id)
+    .eq("blocked_id", blockedId);
+  if (error) throw error;
+}
+
+export async function reportCommunityMessage(messageId: string, reason: "spam" | "abusive" | "other" = "spam") {
+  const { error } = await supabase.rpc("report_community_message", {
+    p_message_id: messageId,
+    p_reason: reason,
+  });
+  if (error) throw error;
+}
+
+export function subscribeToCommunityMessages(
+  channelId: string,
+  onInsert: (message: any) => void,
+  onPresenceSync?: (state: Record<string, any[]>) => void
+) {
+  const subscription = supabase.channel(`community:${channelId}`);
+
+  subscription.on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "community_messages",
+      filter: `channel_id=eq.${channelId}`,
+    },
+    (payload) => {
+      onInsert(payload.new);
+    }
+  );
+
+  if (onPresenceSync) {
+    subscription.on("presence", { event: "sync" }, () => {
+      onPresenceSync(subscription.presenceState());
+    });
+  }
+
+  subscription.subscribe();
+  return subscription;
+}
+
 export async function createCanvas(type: 'lean' | 'vision' | 'team', title: string, data: Record<string, string>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not logged in.");

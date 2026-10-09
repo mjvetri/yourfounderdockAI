@@ -30,6 +30,7 @@ const LeanCanvasPage = lazy(() => import('./src/app/dashboard/lean-canvas/page')
 const VisionBoardPage = lazy(() => import('./src/app/dashboard/vision-board/page'));
 const TeamCanvasPage = lazy(() => import('./src/app/dashboard/team-canvas/page'));
 const GtmStrategyPage = lazy(() => import('./src/app/dashboard/gtm-strategy/page'));
+const CommunityPage = lazy(() => import('./src/app/dashboard/community/page'));
 
 const App = () => {
   return (
@@ -62,7 +63,8 @@ const App = () => {
           <Route path="/dashboard/vision-board" element={<RequireAuth><VisionBoardPage /></RequireAuth>} />
           <Route path="/dashboard/team-canvas" element={<RequireAuth><TeamCanvasPage /></RequireAuth>} />
           <Route path="/dashboard/gtm-strategy" element={<RequireAuth><GtmStrategyPage /></RequireAuth>} />
-          
+          <Route path="/dashboard/community" element={<RequireAuth><CommunityPage /></RequireAuth>} />
+
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
