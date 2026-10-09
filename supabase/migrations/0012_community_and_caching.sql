@@ -13,6 +13,13 @@ create table if not exists public.community_channels (
   created_at timestamptz not null default now()
 );
 
+insert into public.community_channels (slug, name, description, sort_order)
+values
+  ('general', 'General', 'Founder introductions and general discussion.', 1),
+  ('feedback', 'Feedback', 'Share what is working and what to improve.', 2),
+  ('wins', 'Wins', 'Celebrate launches, traction, and product milestones.', 3)
+on conflict (slug) do nothing;
+
 create table if not exists public.community_messages (
   id uuid primary key default gen_random_uuid(),
   channel_id uuid references public.community_channels(id) on delete cascade not null,
@@ -58,15 +65,19 @@ alter table public.ai_usage enable row level security;
 
 drop policy if exists "read community channels" on public.community_channels;
 create policy "read community channels" on public.community_channels
-  for select using (true);
+  for select to public using (true);
+
+drop policy if exists "insert community channels" on public.community_channels;
+create policy "insert community channels" on public.community_channels
+  for insert to public with check (true);
 
 drop policy if exists "read community messages" on public.community_messages;
 create policy "read community messages" on public.community_messages
-  for select using (true);
+  for select to public using (true);
 
 drop policy if exists "insert own community messages" on public.community_messages;
 create policy "insert own community messages" on public.community_messages
-  for insert with check (auth.uid() = user_id);
+  for insert to authenticated with check (auth.uid() = user_id);
 
 drop policy if exists "delete own community messages" on public.community_messages;
 create policy "delete own community messages" on public.community_messages

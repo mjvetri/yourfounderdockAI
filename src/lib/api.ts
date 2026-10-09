@@ -43,130 +43,238 @@ export async function createServiceLead(sessionId: string | null, reason: string
   if (error) throw error;
 }
 
+function isMissingTableError(error: any) {
+  const message = error?.message || '';
+  return /does not exist|relation .* does not exist|column .* does not exist/i.test(message);
+}
+
 export async function ensureDefaultCommunityChannels() {
   const { data, error } = await supabase
     .from("community_channels")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-  if (error) throw error;
+    .select("*");
 
-  if ((data ?? []).length > 0) return data;
+  if (error) {
+    console.error("Community channels error:", error);
+    throw error;
+  }
 
-  const defaults = [
-    { slug: "general", name: "General", description: "Founder introductions and general discussion.", sort_order: 1 },
-    { slug: "feedback", name: "Feedback", description: "Share what is working and what to improve.", sort_order: 2 },
-    { slug: "wins", name: "Wins", description: "Celebrate launches, traction, and product milestones.", sort_order: 3 },
-  ];
-
-  const { data: inserted, error: insertError } = await supabase
-    .from("community_channels")
-    .insert(defaults)
-    .select();
-  if (insertError) throw insertError;
-  return inserted ?? [];
-}
-
-export async function getCommunityChannels() {
-  const { data, error } = await supabase
-    .from("community_channels")
-    .select("*")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-  if (error) throw error;
+  console.log("Community channels loaded:", data);
   return data ?? [];
 }
 
-export async function listCommunityMessages(channelId: string) {
-  const { data, error } = await supabase
-    .from("community_messages")
-    .select("*")
-    .eq("channel_id", channelId)
-    .order("created_at", { ascending: true });
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function createCommunityMessage(channelId: string, body: string) {
+export async function createCommunityChannel(name: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not logged in.");
 
-  const trimmed = body.trim();
-  if (!trimmed) throw new Error("Message cannot be empty.");
+  const trimmedName = name.trim();
+  if (!trimmedName) throw new Error("Channel name cannot be empty.");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, avatar_url")
-    .eq("id", user.id)
-    .maybeSingle();
+  const slug = trimmedName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  if (!slug) throw new Error("Channel name must include letters or numbers.");
 
   const { data, error } = await supabase
-    .from("community_messages")
+    .from("community_channels")
     .insert({
-      channel_id: channelId,
-      user_id: user.id,
-      sender_name: profile?.name || "Founder",
-      sender_avatar: profile?.avatar_url || null,
-      body: trimmed,
+      slug,
+      name: trimmedName,
+      description: "A space for founder discussion.",
+      sort_order: 100,
+      created_by: user.id,
     })
     .select()
     .single();
+
   if (error) throw error;
   return data;
 }
 
-export async function listBlockedUsers() {
+export async function deleteCommunityChannel(channelId: string) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  if (!user) throw new Error("Not logged in.");
 
-  const { data, error } = await supabase
-    .from("community_blocks")
-    .select("*")
-    .eq("blocker_id", user.id)
-    .order("created_at", { ascending: false });
+  const { error } = await supabase
+    .from("community_channels")
+    .delete()
+    .eq("id", channelId)
+    .eq("created_by", user.id);
+
   if (error) throw error;
-  return data ?? [];
+}
+
+export async function getCommunityChannels() {
+  try {
+    const { data, error } = await supabase
+      .from("community_channels")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error)) return [];
+      throw error;
+    }
+    return data ?? [];
+  } catch (error: any) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
+}
+
+export async function listCommunityMessages(channelId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("community_messages")
+      .select("*")
+      .eq("channel_id", channelId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      if (isMissingTableError(error)) return [];
+      throw error;
+    }
+    return data ?? [];
+  } catch (error: any) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
+}
+
+export async function createCommunityMessage(channelId: string, body: string) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not logged in.");
+
+    const trimmed = body.trim();
+    if (!trimmed) throw new Error("Message cannot be empty.");
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const { data, error } = await supabase
+      .from("community_messages")
+      .insert({
+        channel_id: channelId,
+        user_id: user.id,
+        sender_name: profile?.name || "Founder",
+        sender_avatar: profile?.avatar_url || null,
+        body: trimmed,
+      })
+      .select()
+      .single();
+    if (error) {
+      if (isMissingTableError(error)) {
+        throw new Error("Community tables are not available yet. Please run the Supabase migration.");
+      }
+      throw error;
+    }
+    return data;
+  } catch (error: any) {
+    if (isMissingTableError(error)) {
+      throw new Error("Community tables are not available yet. Please run the Supabase migration.");
+    }
+    throw error;
+  }
+}
+
+export async function listBlockedUsers() {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    const { data, error } = await supabase
+      .from("community_blocks")
+      .select("*")
+      .eq("blocker_id", user.id)
+      .order("created_at", { ascending: false });
+    if (error) {
+      if (isMissingTableError(error)) return [];
+      throw error;
+    }
+    return data ?? [];
+  } catch (error: any) {
+    if (isMissingTableError(error)) return [];
+    throw error;
+  }
 }
 
 export async function blockUser(blockedId: string, blockedName?: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not logged in.");
 
-  const { error } = await supabase
-    .from("community_blocks")
-    .upsert({
-      blocker_id: user.id,
-      blocked_id: blockedId,
-      blocked_name: blockedName || null,
-      created_at: new Date().toISOString(),
-    }, { onConflict: "blocker_id,blocked_id" });
-  if (error) throw error;
+  try {
+    const { error } = await supabase
+      .from("community_blocks")
+      .upsert({
+        blocker_id: user.id,
+        blocked_id: blockedId,
+        blocked_name: blockedName || null,
+        created_at: new Date().toISOString(),
+      }, { onConflict: "blocker_id,blocked_id" });
+    if (error) {
+      if (isMissingTableError(error)) {
+        throw new Error("Community tables are not available yet. Please run the Supabase migration.");
+      }
+      throw error;
+    }
+  } catch (error: any) {
+    if (isMissingTableError(error)) {
+      throw new Error("Community tables are not available yet. Please run the Supabase migration.");
+    }
+    throw error;
+  }
 }
 
 export async function unblockUser(blockedId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not logged in.");
 
-  const { error } = await supabase
-    .from("community_blocks")
-    .delete()
-    .eq("blocker_id", user.id)
-    .eq("blocked_id", blockedId);
-  if (error) throw error;
+  try {
+    const { error } = await supabase
+      .from("community_blocks")
+      .delete()
+      .eq("blocker_id", user.id)
+      .eq("blocked_id", blockedId);
+    if (error) {
+      if (isMissingTableError(error)) {
+        throw new Error("Community tables are not available yet. Please run the Supabase migration.");
+      }
+      throw error;
+    }
+  } catch (error: any) {
+    if (isMissingTableError(error)) {
+      throw new Error("Community tables are not available yet. Please run the Supabase migration.");
+    }
+    throw error;
+  }
 }
 
 export async function reportCommunityMessage(messageId: string, reason: "spam" | "abusive" | "other" = "spam") {
-  const { error } = await supabase.rpc("report_community_message", {
-    p_message_id: messageId,
-    p_reason: reason,
-  });
-  if (error) throw error;
+  try {
+    const { error } = await supabase.rpc("report_community_message", {
+      p_message_id: messageId,
+      p_reason: reason,
+    });
+    if (error) {
+      if (isMissingTableError(error) || /function .* does not exist/i.test(error.message || '')) {
+        throw new Error("Community moderation functions are not available yet. Please run the Supabase migration.");
+      }
+      throw error;
+    }
+  } catch (error: any) {
+    if (isMissingTableError(error) || /function .* does not exist/i.test(error.message || '')) {
+      throw new Error("Community moderation functions are not available yet. Please run the Supabase migration.");
+    }
+    throw error;
+  }
 }
 
 export function subscribeToCommunityMessages(
   channelId: string,
-  onInsert: (message: any) => void,
-  onPresenceSync?: (state: Record<string, any[]>) => void
+  onInsert: (message: any) => void
 ) {
   const subscription = supabase.channel(`community:${channelId}`);
 
@@ -183,14 +291,42 @@ export function subscribeToCommunityMessages(
     }
   );
 
-  if (onPresenceSync) {
-    subscription.on("presence", { event: "sync" }, () => {
-      onPresenceSync(subscription.presenceState());
-    });
-  }
-
   subscription.subscribe();
   return subscription;
+}
+
+export function subscribeToCommunityPresence(
+  userId: string,
+  onPresenceSync: (state: Record<string, any[]>) => void,
+  onError: (error: Error) => void
+) {
+  const presenceChannel = supabase.channel("founder-community-presence", {
+    config: { presence: { key: userId } },
+  });
+
+  presenceChannel
+    .on("presence", { event: "sync" }, () => {
+      onPresenceSync(presenceChannel.presenceState());
+    })
+    .subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        try {
+          const trackStatus = await presenceChannel.track({
+            user_id: userId,
+            online_at: new Date().toISOString(),
+          });
+          if (trackStatus !== "ok") {
+            onError(new Error(`Could not publish community presence: ${trackStatus}`));
+          }
+        } catch (error) {
+          onError(error instanceof Error ? error : new Error("Could not publish community presence."));
+        }
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        onError(new Error(`Community presence connection ${status.toLowerCase().replace("_", " ")}.`));
+      }
+    });
+
+  return presenceChannel;
 }
 
 export async function createCanvas(type: 'lean' | 'vision' | 'team', title: string, data: Record<string, string>) {
