@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Anchor, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { signIn } from '../../../lib/api';
+import BrandLogo from '../../../components/ui/BrandLogo';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const LoginPage = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" className="flex justify-center items-center gap-2 mb-6">
-            <Anchor className="w-10 h-10 text-primary-600" />
+            <BrandLogo className="h-10 w-10" />
             <span className="text-2xl font-bold text-slate-900">YourFounderDock</span>
         </Link>
         <h2 className="text-center text-3xl font-bold tracking-tight text-slate-900">Sign in to your dock</h2>

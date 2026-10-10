@@ -79,7 +79,7 @@ const NotificationsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex justify-between items-start mb-6">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 flex items-center gap-2">
             Notifications
@@ -87,7 +87,7 @@ const NotificationsPage = () => {
           </h1>
           <p className="text-slate-500 mt-1">Stay updated with your project progress and alerts.</p>
         </div>
-        <button type="button" onClick={handleMarkAllRead} disabled={unreadCount === 0} className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+        <button type="button" onClick={handleMarkAllRead} disabled={unreadCount === 0} className="flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
           <Check className="w-4 h-4" /> Mark all as read
         </button>
       </div>
@@ -109,12 +109,12 @@ const NotificationsPage = () => {
           {visible.map((notification) => {
             const { Icon, color } = ICONS[notification.type] || ICONS.system;
             return (
-              <div key={notification.id} onClick={() => !notification.read && handleMarkRead(notification.id)} className={`flex items-start justify-between gap-4 p-4 rounded-xl border cursor-pointer ${notification.read ? 'bg-white border-slate-200' : 'bg-primary-50/50 border-primary-100'}`}>
-                <div className="flex items-start gap-3">
+              <div key={notification.id} onClick={() => !notification.read && handleMarkRead(notification.id)} className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4 ${notification.read ? 'bg-white border-slate-200' : 'bg-primary-50/50 border-primary-100'}`}>
+                <div className="flex min-w-0 items-start gap-3">
                   <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${color}`} />
-                  <div><h4 className="font-bold text-sm text-slate-900">{notification.title}</h4><p className="text-sm text-slate-600">{notification.message}</p></div>
+                  <div className="min-w-0 break-words"><h4 className="font-bold text-sm text-slate-900">{notification.title}</h4><p className="break-words text-sm text-slate-600">{notification.message}</p></div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0"><span className="text-xs text-slate-400 whitespace-nowrap">{timeAgo(notification.created_at)}</span>{!notification.read && <span className="w-2 h-2 rounded-full bg-primary-600" />}<button type="button" onClick={(event) => { event.stopPropagation(); handleDelete(notification.id); }} aria-label={`Delete ${notification.title}`} className="text-slate-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button></div>
+                <div className="flex shrink-0 items-center gap-3 self-end sm:self-start"><span className="whitespace-nowrap text-xs text-slate-400">{timeAgo(notification.created_at)}</span>{!notification.read && <span className="h-2 w-2 rounded-full bg-primary-600" />}<button type="button" onClick={(event) => { event.stopPropagation(); handleDelete(notification.id); }} aria-label={`Delete ${notification.title}`} className="flex h-9 w-9 items-center justify-center rounded-full text-slate-300 hover:bg-red-50 hover:text-red-500"><Trash2 className="h-4 w-4" /></button></div>
               </div>
             );
           })}

@@ -72,7 +72,7 @@ const ProgressPage = () => {
   };
 
   const Column = ({ title, status, icon: Icon }: { title: string; status: 'todo' | 'in-progress' | 'done'; icon: any }) => (
-    <div className="flex-1 min-w-[300px] bg-slate-50 rounded-xl p-4 border border-slate-200 h-full flex flex-col">
+    <div className="w-full min-w-0 flex-1 bg-slate-50 rounded-xl p-4 border border-slate-200 h-full flex flex-col">
       <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
         <h3 className="font-bold text-slate-700 flex items-center gap-2">
           <Icon className="w-4 h-4" /> {title}
@@ -103,15 +103,15 @@ const ProgressPage = () => {
             </div>
             <p className="font-medium text-slate-800 mb-4">{task.title}</p>
 
-            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex flex-wrap gap-2 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
               {status !== 'todo' && (
-                <button type="button" onClick={() => moveTask(task.id, 'todo')} className="text-xs bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded text-slate-600">To Todo</button>
+                <button type="button" onClick={() => moveTask(task.id, 'todo')} className="min-h-9 rounded bg-slate-100 px-2 py-2 text-xs text-slate-600 hover:bg-slate-200">To Todo</button>
               )}
               {status !== 'in-progress' && (
-                <button type="button" onClick={() => moveTask(task.id, 'in-progress')} className="text-xs bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded text-blue-600">To Active</button>
+                <button type="button" onClick={() => moveTask(task.id, 'in-progress')} className="min-h-9 rounded bg-blue-50 px-2 py-2 text-xs text-blue-600 hover:bg-blue-100">To Active</button>
               )}
               {status !== 'done' && (
-                <button type="button" onClick={() => moveTask(task.id, 'done')} className="text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded text-green-600">To Done</button>
+                <button type="button" onClick={() => moveTask(task.id, 'done')} className="min-h-9 rounded bg-green-50 px-2 py-2 text-xs text-green-600 hover:bg-green-100">To Done</button>
               )}
             </div>
           </div>

@@ -258,7 +258,7 @@ const ChatPage = () => {
 
   return (
     <DashboardLayout fullScreen>
-      <div className="flex h-screen bg-white overflow-hidden">
+      <div className="flex h-[calc(100dvh-4rem)] flex-col bg-white overflow-hidden pt-16 xl:h-screen xl:pt-0">
         <div className="flex flex-col flex-1 min-w-0">
           <div className="flex-shrink-0 flex items-center justify-between px-4 py-4 sm:px-5 border-b border-slate-100">
             <div className="flex items-center gap-3">

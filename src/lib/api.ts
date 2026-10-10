@@ -140,6 +140,25 @@ export async function listCommunityMessages(channelId: string) {
   }
 }
 
+export async function getLatestCommunityMessage(channelId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("community_messages")
+      .select("*")
+      .eq("channel_id", channelId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) {
+      if (isMissingTableError(error)) return null;
+      throw error;
+    }
+    return data?.[0] ?? null;
+  } catch (error: any) {
+    if (isMissingTableError(error)) return null;
+    throw error;
+  }
+}
+
 export async function createCommunityMessage(channelId: string, body: string) {
   try {
     const { data: { user } } = await supabase.auth.getUser();

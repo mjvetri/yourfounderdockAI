@@ -1,5 +1,5 @@
-﻿import React, { useEffect, useState } from 'react';
-import { Ban, Flag, Hash, Loader2, MessageSquare, Plus, Send, ShieldAlert, Smile, Trash2, UserX, Users, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Ban, Flag, Hash, Loader2, MessageSquare, MoreHorizontal, Plus, Send, ShieldAlert, Smile, Trash2, UserX, X } from 'lucide-react';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import { supabase } from '../../../lib/supabaseClient';
 import {
@@ -8,6 +8,7 @@ import {
   createCommunityMessage,
   deleteCommunityChannel,
   ensureDefaultCommunityChannels,
+  getLatestCommunityMessage,
   getCurrentUser,
   listBlockedUsers,
   listCommunityMessages,
@@ -59,7 +60,10 @@ function formatTime(value: string) {
 export default function CommunityPage() {
   const [channels, setChannels] = useState<CommunityChannel[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [messages, setMessages] = useState<CommunityMessage[]>([]);
+  const [messagesByChannel, setMessagesByChannel] = useState<Record<string, CommunityMessage[]>>({});
+  const [unreadByChannel, setUnreadByChannel] = useState<Record<string, number>>({});
   const [blockedUsers, setBlockedUsers] = useState<CommunityBlock[]>([]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,12 @@ export default function CommunityPage() {
   const [addingChannel, setAddingChannel] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showBlockedUsers, setShowBlockedUsers] = useState(false);
+  const [messageActionsId, setMessageActionsId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const selectedChannelIdRef = useRef(selectedChannelId);
+  const mobileChatOpenRef = useRef(mobileChatOpen);
+  selectedChannelIdRef.current = selectedChannelId;
+  mobileChatOpenRef.current = mobileChatOpen;
 
   useEffect(() => {
     let active = true;
@@ -166,7 +175,11 @@ export default function CommunityPage() {
     const loadMessages = async () => {
       try {
         const rows = await listCommunityMessages(selectedChannelId);
-        if (active) setMessages((rows ?? []) as CommunityMessage[]);
+        if (active) {
+          const channelMessages = (rows ?? []) as CommunityMessage[];
+          setMessages(channelMessages);
+          setMessagesByChannel((current) => ({ ...current, [selectedChannelId]: channelMessages }));
+        }
       } catch (err: any) {
         if (active) {
           setError(isMissingCommunitySchemaError(err)
@@ -178,21 +191,68 @@ export default function CommunityPage() {
 
     loadMessages();
 
-    const subscription = subscribeToCommunityMessages(
-      selectedChannelId,
-      (message) => {
-        setMessages((current) => {
-          if (current.some((item) => item.id === message.id)) return current;
-          return [...current, message as CommunityMessage];
+    return () => {
+      active = false;
+    };
+  }, [selectedChannelId]);
+
+  useEffect(() => {
+    if (channels.length === 0) return;
+
+    let active = true;
+    const loadChannelPreviews = async () => {
+      try {
+        const previews = await Promise.all(
+          channels.map(async (channel) => [channel.id, await getLatestCommunityMessage(channel.id)] as const)
+        );
+        if (!active) return;
+
+        setMessagesByChannel((current) => {
+          let changed = false;
+          const updated = { ...current };
+          previews.forEach(([channelId, message]) => {
+            if (message && !(current[channelId]?.length)) {
+              updated[channelId] = [message as CommunityMessage];
+              changed = true;
+            }
+          });
+          return changed ? updated : current;
         });
+      } catch (err: any) {
+        if (active) setError(err?.message || 'Unable to load channel previews.');
       }
+    };
+
+    void loadChannelPreviews();
+    return () => {
+      active = false;
+    };
+  }, [channels]);
+
+  useEffect(() => {
+    const subscriptions = channels.map((channel) =>
+      subscribeToCommunityMessages(channel.id, (incoming) => {
+        const message = incoming as CommunityMessage;
+        setMessagesByChannel((current) => {
+          const channelMessages = current[channel.id] ?? [];
+          if (channelMessages.some((item) => item.id === message.id)) return current;
+          const updatedMessages = [...channelMessages, message];
+          if (selectedChannelIdRef.current === channel.id) setMessages(updatedMessages);
+          return { ...current, [channel.id]: updatedMessages };
+        });
+
+        const currentConversationVisible = selectedChannelIdRef.current === channel.id
+          && (window.matchMedia('(min-width: 1024px)').matches || mobileChatOpenRef.current);
+        if (!currentConversationVisible) {
+          setUnreadByChannel((current) => ({ ...current, [channel.id]: (current[channel.id] ?? 0) + 1 }));
+        }
+      })
     );
 
     return () => {
-      active = false;
-      subscription.unsubscribe();
+      subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
-  }, [selectedChannelId]);
+  }, [channels]);
 
   const activeChannel = channels.find((channel) => channel.id === selectedChannelId) ?? channels[0] ?? null;
   const blockedIds = blockedUsers.map((blockedUser) => blockedUser.blocked_id);
@@ -228,6 +288,7 @@ export default function CommunityPage() {
       const channel = await createCommunityChannel(channelName);
       setChannels((current) => [...current, channel as CommunityChannel]);
       setSelectedChannelId(channel.id);
+      setMobileChatOpen(true);
       setChannelName('');
       setShowChannelForm(false);
     } catch (err: any) {
@@ -248,9 +309,18 @@ export default function CommunityPage() {
       await deleteCommunityChannel(channel.id);
       const remainingChannels = channels.filter((item) => item.id !== channel.id);
       setChannels(remainingChannels);
+      setMessagesByChannel((current) => {
+        const { [channel.id]: _deletedMessages, ...remainingMessages } = current;
+        return remainingMessages;
+      });
+      setUnreadByChannel((current) => {
+        const { [channel.id]: _deletedUnread, ...remainingUnread } = current;
+        return remainingUnread;
+      });
       if (selectedChannelId === channel.id) {
         setSelectedChannelId(remainingChannels[0]?.id ?? null);
         setMessages([]);
+        setMobileChatOpen(false);
       }
     } catch (err: any) {
       setError(err?.message || 'Unable to delete this channel.');
@@ -315,16 +385,16 @@ export default function CommunityPage() {
 
   return (
     <DashboardLayout fullScreen>
-      <div className="flex h-screen min-h-0 w-full flex-col gap-3 p-3 pt-20 sm:gap-4 sm:p-4 sm:pt-20">
+      <div className="flex h-[100dvh] min-h-0 w-full flex-col gap-3 pt-16 sm:gap-4 lg:h-screen lg:p-4 lg:pt-20">
         {error && (
-          <div role="alert" className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-700 shadow-sm">
+          <div role="alert" className="mx-3 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-700 shadow-sm sm:mx-4 lg:mx-0">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="grid min-h-0 flex-1 overflow-hidden rounded-[26px] border border-slate-200/80 bg-white shadow-sm lg:grid-cols-[minmax(270px,26%)_minmax(0,1fr)]">
-          <aside className="flex flex-col border-b border-slate-100 bg-gradient-to-b from-white to-slate-50/70 p-4 sm:p-5 lg:border-b-0 lg:border-r">
+        <div className="grid min-h-0 flex-1 overflow-hidden border-y border-slate-200/80 bg-white shadow-sm sm:mx-4 sm:rounded-[26px] sm:border lg:mx-0 lg:grid-cols-[minmax(270px,26%)_minmax(0,1fr)]">
+          <aside className={`min-h-0 flex-col border-b border-slate-100 bg-gradient-to-b from-white to-slate-50/70 p-4 sm:p-5 lg:border-b-0 lg:border-r ${mobileChatOpen ? 'hidden lg:flex' : 'flex'}`}>
             <div className="mb-5 flex items-center justify-between px-1">
               <h2 className="font-display text-base font-bold text-slate-900">Channels</h2>
               <button
@@ -362,10 +432,12 @@ export default function CommunityPage() {
               </form>
             )}
 
-            <div className="space-y-2.5">
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto">
               {channels.map((channel) => {
                 const active = channel.id === selectedChannelId;
-                const messageCount = messages.filter((msg) => msg.channel_id === channel.id).length;
+                const channelMessages = messagesByChannel[channel.id] ?? [];
+                const latestMessage = channelMessages[channelMessages.length - 1];
+                const unreadCount = unreadByChannel[channel.id] ?? 0;
                 return (
                   <div
                     key={channel.id}
@@ -377,7 +449,11 @@ export default function CommunityPage() {
                   >
                     <button
                       type="button"
-                      onClick={() => setSelectedChannelId(channel.id)}
+                      onClick={() => {
+                        setSelectedChannelId(channel.id);
+                        setMobileChatOpen(true);
+                        setUnreadByChannel((current) => ({ ...current, [channel.id]: 0 }));
+                      }}
                       aria-pressed={active}
                       className="min-w-0 flex-1 p-3.5 text-left"
                     >
@@ -392,14 +468,14 @@ export default function CommunityPage() {
                             <span className={`truncate text-sm font-bold ${active ? 'text-primary-950' : 'text-slate-800'}`}>
                               {channel.name}
                             </span>
-                            <span className={`shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold ${
-                              active ? 'bg-white text-primary-700' : 'bg-white text-slate-500'
-                            }`}>
-                              {messageCount}
-                            </span>
+                            {unreadCount > 0 && (
+                              <span aria-label={`${unreadCount} unread messages`} className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-bold text-white">
+                                {unreadCount}
+                              </span>
+                            )}
                           </div>
                           <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                            {channel.description || 'Community discussion'}
+                            {latestMessage ? `${latestMessage.sender_name}: ${latestMessage.body}` : channel.description || 'Community discussion'}
                           </p>
                         </div>
                       </div>
@@ -461,9 +537,17 @@ export default function CommunityPage() {
             </div>
           </aside>
 
-          <section className="flex min-h-0 flex-col bg-white">
-            <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6">
+          <section className={`min-h-0 flex-col bg-white ${mobileChatOpen ? 'flex' : 'hidden lg:flex'}`}>
+            <div className="flex items-center justify-between border-b border-slate-100 bg-white px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex min-w-0 items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileChatOpen(false)}
+                  aria-label="Back to channels"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 lg:hidden"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-md shadow-primary-600/20">
                   <Hash className="h-5 w-5" />
                 </span>
@@ -471,7 +555,7 @@ export default function CommunityPage() {
                   <h2 className="truncate font-display text-xl font-bold text-slate-900">
                     {activeChannel?.name || 'Community'}
                   </h2>
-                  <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 sm:hidden">{activeChannel?.description}</p>
+                  <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{onlineCount} online · community channel</p>
                 </div>
               </div>
               <div className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-slate-800">
@@ -481,7 +565,7 @@ export default function CommunityPage() {
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col bg-white">
-              <div className="flex-1 space-y-5 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-slate-50/60 px-4 py-5 sm:px-6 sm:py-8">
                 {visibleMessages.length === 0 ? (
                   <div className="flex min-h-[300px] items-center justify-center px-4 text-center">
                     <div className="max-w-sm">
@@ -496,24 +580,63 @@ export default function CommunityPage() {
                   </div>
                 ) : (
                   visibleMessages.map((message) => (
-                    <article key={message.id} className="group flex gap-3 sm:gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-sm font-bold text-primary-700">
+                    <article key={message.id} className={`group flex gap-2 sm:gap-4 ${message.user_id === currentUserId ? 'flex-row-reverse' : ''}`}>
+                      <div className="hidden h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-sm font-bold text-primary-700 sm:flex">
                         {message.sender_avatar ? (
                           <img src={message.sender_avatar} alt={message.sender_name} className="h-full w-full object-cover" />
                         ) : (
                           message.sender_name.charAt(0).toUpperCase()
                         )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <div className={`min-w-0 max-w-[88%] sm:max-w-[80%] ${message.user_id === currentUserId ? 'text-right' : ''}`}>
+                        <div className={`mb-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 ${message.user_id === currentUserId ? 'justify-end' : ''}`}>
                           <p className="text-sm font-bold text-slate-900">{message.sender_name}</p>
                           <p className="text-xs font-medium text-slate-500">{formatTime(message.created_at)}</p>
                         </div>
-                        <div className="relative w-fit max-w-full rounded-[18px] bg-slate-100 px-4 py-3">
-                          <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-800">{message.body}</p>
+                        <div className="relative">
+                          <div className={`relative w-fit max-w-full rounded-[18px] px-4 py-3 ${message.user_id === currentUserId ? 'ml-auto rounded-tr-md bg-primary-600 text-white' : 'rounded-tl-md bg-white shadow-sm'}`}>
+                            <p className={`whitespace-pre-wrap break-words text-left text-sm leading-6 ${message.user_id === currentUserId ? 'text-white' : 'text-slate-800'}`}>{message.body}</p>
+                          </div>
+                          <div className="absolute -bottom-2 right-1 z-10 lg:hidden">
+                            <button
+                              type="button"
+                              onClick={() => setMessageActionsId((current) => current === message.id ? null : message.id)}
+                              aria-label={`More actions for ${message.sender_name}'s message`}
+                              aria-expanded={messageActionsId === message.id}
+                              className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-100 bg-white text-slate-400 shadow-sm"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </button>
+                            {messageActionsId === message.id && (
+                              <div className="absolute bottom-8 right-0 flex rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void handleToggleBlock(message.user_id, message.sender_name);
+                                    setMessageActionsId(null);
+                                  }}
+                                  aria-label={blockedIds.includes(message.user_id) ? 'Unblock user' : 'Block user'}
+                                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                                >
+                                  {blockedIds.includes(message.user_id) ? <UserX className="h-4 w-4" /> : <Ban className="h-4 w-4" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void handleReport(message.id);
+                                    setMessageActionsId(null);
+                                  }}
+                                  aria-label="Report message"
+                                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-amber-50 hover:text-amber-700"
+                                >
+                                  <Flag className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-start gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                      <div className="hidden shrink-0 items-start gap-1 transition-opacity lg:flex lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100">
                         <button
                           type="button"
                           onClick={() => handleToggleBlock(message.user_id, message.sender_name)}
@@ -538,7 +661,7 @@ export default function CommunityPage() {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 bg-white px-4 py-4 sm:px-8 sm:py-5">
+              <div className="border-t border-slate-100 bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-8 sm:py-5">
                 <div className="relative mx-auto flex max-w-4xl items-center gap-3 rounded-full border border-slate-200 bg-white p-2 shadow-[0_12px_35px_rgba(15,23,42,0.08)] focus-within:border-primary-200">
                   <input
                     value={draft}

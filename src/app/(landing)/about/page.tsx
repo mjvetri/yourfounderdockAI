@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Anchor, Linkedin, ArrowUpRight, BookOpen, MapPin, Phone, Instagram, Facebook } from 'lucide-react';
+import BrandLogo from '../../../components/ui/BrandLogo';
 
 const AboutPage = () => {
   return (
@@ -16,7 +17,7 @@ const AboutPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-xl text-slate-900 group">
             <div className="bg-slate-900 text-white p-1.5 rounded-lg group-hover:bg-primary-600 transition-colors">
-                <Anchor className="w-5 h-5" />
+                <BrandLogo className="h-5 w-5" inverse />
             </div>
             <span className="tracking-tight">YourFounderDock</span>
           </Link>
@@ -83,7 +84,7 @@ const AboutPage = () => {
           <div className="lg:w-[68%] w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 auto-rows-[minmax(180px,auto)]">
             
             {/* Book a Call - Large Card (Blue) */}
-            <a href="https://calendly.com" target="_blank" rel="noopener noreferrer" className="col-span-1 sm:col-span-2 row-span-2 bg-[#0055FF] rounded-[2.5rem] p-8 text-white relative overflow-hidden group hover:shadow-2xl hover:shadow-blue-600/30 transition-all duration-500 flex flex-col justify-between min-h-[320px]">
+            <a href="https://calendly.com" target="_blank" rel="noopener noreferrer" className="col-span-1 sm:col-span-2 row-span-2 bg-[#0055FF] rounded-[2.5rem] p-6 sm:p-8 text-white relative overflow-hidden group hover:shadow-2xl hover:shadow-blue-600/30 transition-all duration-500 flex flex-col justify-between min-h-[320px]">
                 {/* Abstract shapes */}
                 <div className="absolute top-[-20%] right-[-20%] w-64 h-64 bg-white/10 rounded-full blur-[60px] group-hover:bg-white/20 transition-colors"></div>
                 <div className="absolute bottom-[-10%] left-[-10%] w-48 h-48 bg-indigo-600/50 rounded-full blur-[40px]"></div>
@@ -98,8 +99,8 @@ const AboutPage = () => {
                 </div>
 
                 <div className="relative z-10">
-                    <h3 className="text-4xl font-bold mb-2 tracking-tight">Book a Call</h3>
-                    <p className="text-blue-100 text-lg font-medium opacity-90">Let's build your MVP strategy together.</p>
+                    <h3 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">Book a Call</h3>
+                    <p className="text-base sm:text-lg text-blue-100 font-medium opacity-90">Let's build your MVP strategy together.</p>
                     <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full backdrop-blur-sm border border-white/10 text-sm font-medium">
                         <span className="w-2 h-2 rounded-full bg-green-400"></span> Available Today
                     </div>
@@ -107,14 +108,14 @@ const AboutPage = () => {
             </a>
 
             {/* Brand Card (Dark/Teal) */}
-            <div className="col-span-1 sm:col-span-2 bg-[#1A1A1A] rounded-[2.5rem] p-8 relative overflow-hidden group text-center flex flex-col items-center justify-center min-h-[240px]">
+            <div className="col-span-1 sm:col-span-2 bg-[#1A1A1A] rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden group text-center flex flex-col items-center justify-center min-h-[240px]">
                 <div className="absolute inset-0 bg-gradient-to-tr from-teal-900/40 to-transparent opacity-50"></div>
                 <div className="absolute -bottom-12 -right-12 text-slate-800 opacity-20 transform rotate-[-15deg]">
                     <Anchor className="w-48 h-48" />
                 </div>
                 
                 <div className="relative z-10 transform transition-transform duration-500 group-hover:scale-105">
-                     <h2 className="text-4xl font-black text-white tracking-tighter mb-1">FOUNDER<span className="text-teal-400 font-light">DOCK</span></h2>
+                     <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter mb-1">FOUNDER<span className="text-teal-400 font-light">DOCK</span></h2>
                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400">Design Meets Code</p>
                 </div>
             </div>
@@ -144,17 +145,17 @@ const AboutPage = () => {
             </a>
 
             {/* Mission Statement (Long Card) */}
-            <div className="col-span-1 sm:col-span-2 lg:col-span-4 bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-4 bg-white rounded-[2.5rem] p-6 sm:p-8 md:p-10 border border-slate-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none transform rotate-12 scale-150">
                     <Anchor className="w-64 h-64 text-slate-900" />
                 </div>
                 
                 <div className="relative z-10 max-w-3xl">
                      <span className="text-7xl text-primary-200 font-serif leading-none absolute -top-4 -left-2 select-none">“</span>
-                     <h3 className="text-xl md:text-2xl font-medium text-slate-800 leading-relaxed pt-6">
+                     <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-slate-800 leading-relaxed pt-6">
                         Hey Founder, I built this tool because <span className="text-primary-600 font-bold">I want to help young founders like you</span>. 
                         I spent 2 years languishing, trying to build my MVP. Consultants wanted 
-                        <span className="inline-block bg-slate-100 px-2 rounded mx-1 font-bold text-slate-900 border border-slate-200">$20k-$50k</span> 
+                        <span className="bg-slate-100 px-2 rounded mx-1 font-bold text-slate-900 border border-slate-200">$20k-$50k</span> 
                         just for guidance. So I built this to democratize innovation.
                      </h3>
                      

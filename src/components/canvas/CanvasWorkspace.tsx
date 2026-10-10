@@ -194,38 +194,40 @@ export default function CanvasWorkspace({ canvasType, pageTitle, pageDescription
         canvases.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {canvases.map((canvas) => (
-              <button
+              <div
                 key={canvas.id}
-                type="button"
-                onClick={() => selectCanvas(canvas)}
-                className="group text-left rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-primary-200 hover:shadow-md"
+                className="group relative rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-primary-200 hover:shadow-md"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
-                    <span className="text-lg font-bold">✦</span>
+                <button
+                  type="button"
+                  onClick={() => selectCanvas(canvas)}
+                  className="w-full rounded-xl p-5 pr-14 text-left"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-600">
+                      <span className="text-lg font-bold">✦</span>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(event) => handleDelete(canvas.id, event)}
-                    aria-label={`Delete ${canvas.title || pageTitle}`}
-                    className="rounded-md p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
 
-                <h3 className="font-bold text-lg text-slate-900 mb-2 line-clamp-2">
-                  {canvas.title || `Untitled ${pageTitle}`}
-                </h3>
-                <p className="text-sm text-slate-500 min-h-[44px]">{getCanvasPreview(canvas)}</p>
+                  <h3 className="mb-2 line-clamp-2 text-lg font-bold text-slate-900">
+                    {canvas.title || `Untitled ${pageTitle}`}
+                  </h3>
+                  <p className="min-h-[44px] text-sm text-slate-500">{getCanvasPreview(canvas)}</p>
 
-                <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
-                  <span className="text-xs uppercase tracking-[0.14em] text-slate-400">Draft</span>
-                  <span className="inline-flex items-center gap-1 text-sm font-medium text-primary-600">
-                    Open
-                  </span>
-                </div>
-              </button>
+                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-3">
+                    <span className="text-xs uppercase tracking-[0.14em] text-slate-400">Draft</span>
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-primary-600">Open</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => handleDelete(canvas.id, event)}
+                  aria-label={`Delete ${canvas.title || pageTitle}`}
+                  className="absolute right-4 top-4 rounded-md p-2 text-slate-400 transition hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             ))}
           </div>
         ) : (
