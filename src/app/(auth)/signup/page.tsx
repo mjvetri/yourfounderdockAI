@@ -36,7 +36,7 @@ const SignupPage = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" className="flex justify-center items-center gap-2 mb-6">
-            <BrandLogo className="h-10 w-10" />
+            <BrandLogo className="h-10 w-10" transparent />
             <span className="text-2xl font-bold text-slate-900">YourFounderDock</span>
         </Link>
         <h2 className="text-center text-3xl font-bold tracking-tight text-slate-900">Start building your product</h2>

@@ -144,7 +144,7 @@ const LandingPage = () => {
                 <div className="flex min-w-0 items-center justify-between gap-2 rounded-[22px] bg-white px-3 py-3 shadow-sm sm:px-4">
                   <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#f8d96f] via-[#ffb967] to-[#f7af7a] shadow-[0_10px_30px_rgba(245,171,99,0.35)]">
-                      <BrandLogo className="h-full w-full mix-blend-multiply" />
+                      <BrandLogo className="h-full w-full" transparent />
                     </div>
                       <div className="whitespace-nowrap text-sm font-semibold text-slate-700 sm:text-base">YourFounderDock</div>
                   </div>
