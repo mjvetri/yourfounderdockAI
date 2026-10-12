@@ -1,6 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
+import { runWithQuota } from "../_shared/quota.ts";
 
 // POST body: { ideaId: string, ideaDescription: string }
 // Returns: { verdict, techStack, risks, nextSteps } and persists it
@@ -33,7 +34,7 @@ Deno.serve(async (req) => {
       Return ONLY valid JSON, no markdown fences.
     `;
 
-    const result = await callGeminiJSON(prompt);
+    const result = await runWithQuota(user.id, "validate-idea", () => callGeminiJSON(prompt));
 
     // Persist the report so it survives a refresh.
     if (ideaId) {

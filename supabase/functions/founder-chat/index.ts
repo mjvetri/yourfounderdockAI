@@ -1,6 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiChat } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
+import { runWithQuota } from "../_shared/quota.ts";
 
 const HELP_SIGNAL_PATTERNS = [
   /i don'?t know how/i,
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
     const helpSignal = detectsHelpSignal(message);
     let reply: string;
     try {
-      reply = await callGeminiChat(history, message, SYSTEM_INSTRUCTION);
+      reply = await runWithQuota(user.id, "founder-chat", () => callGeminiChat(history, message, SYSTEM_INSTRUCTION));
     } catch (error) {
       if (!helpSignal) throw error;
       reply = "Our YourFounder team can build this for you. Kindly reach us at yourfounder@team.com so we can help you get started.";

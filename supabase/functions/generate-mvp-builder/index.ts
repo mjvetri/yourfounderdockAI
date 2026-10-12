@@ -1,6 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
+import { runWithQuota } from "../_shared/quota.ts";
 
 // POST body: { ideaId: string, ideaDescription: string, category: 'software' | 'hardware' }
 
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
       ? buildHardwarePrompt(ideaDescription)
       : buildSoftwarePrompt(ideaDescription);
 
-    const result = await callGeminiJSON(prompt);
+    const result = await runWithQuota(user.id, "generate-mvp-builder", () => callGeminiJSON(prompt));
 
     await supabase.from("mvp_builds").delete().eq("idea_id", ideaId).eq("user_id", user.id);
     const { error: insertError } = await supabase.from("mvp_builds").insert({

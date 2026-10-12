@@ -2,6 +2,12 @@ import { supabase } from "./supabaseClient";
 
 const FILES_BUCKET = "founder-files";
 
+export async function getMyAiUsageToday(): Promise<number> {
+  const { data, error } = await supabase.rpc("my_ai_usage_today");
+  if (error) throw error;
+  return (data as number) ?? 0;
+}
+
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------

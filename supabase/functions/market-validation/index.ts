@@ -1,6 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
+import { runWithQuota } from "../_shared/quota.ts";
 
 type ValidationType = "competitors" | "interviews" | "surveys" | "landing";
 
@@ -62,7 +63,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const result = await callGeminiJSON(buildPrompt(type, idea));
+    const result = await runWithQuota(user.id, "market-validation", () => callGeminiJSON(buildPrompt(type, idea)));
 
     const { error: insertError } = await supabase.from("market_validations").insert({
       user_id: user.id,

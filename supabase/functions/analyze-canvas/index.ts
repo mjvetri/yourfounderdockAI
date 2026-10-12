@@ -1,6 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
+import { runWithQuota } from "../_shared/quota.ts";
 
 type CanvasType = "lean" | "vision" | "team";
 
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const analysis = await callGeminiJSON(buildPrompt(type, data));
+    const analysis = await runWithQuota(user.id, "analyze-canvas", () => callGeminiJSON(buildPrompt(type, data)));
     const { error: updateError } = await supabase
       .from("canvases")
       .update({ analysis, updated_at: new Date().toISOString() })

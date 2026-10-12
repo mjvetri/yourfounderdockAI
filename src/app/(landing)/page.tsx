@@ -207,6 +207,27 @@ const LandingPage = () => {
           </div>
         </div>
       </section>
+
+      {/* ---------- PRICING ---------- */}
+      <section className="py-24 bg-slate-50/60">
+        <div className="max-w-3xl mx-auto px-5 text-center">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-3 py-1.5 mb-5">
+            <Sparkles className="w-3.5 h-3.5" /> Free during beta
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Free while we're in beta.</h2>
+          <p className="mt-3 text-slate-500">
+            Use every tool today at no cost. Paid plans are coming soon, and we'll tell early users before anything changes.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link to="/signup" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors">
+              Get Started for Free <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link to="/pricing" className="inline-flex items-center gap-2 border border-slate-300 hover:bg-white text-slate-800 font-semibold px-6 py-3.5 rounded-xl transition-colors">
+              See pricing details
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

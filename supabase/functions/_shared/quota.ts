@@ -4,7 +4,7 @@ import { corsHeaders } from "./cors.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-export const DAILY_LIMITS = { free: 15, pro: 150 } as const;
+export const DAILY_LIMIT = 15;
 
 export class QuotaError extends Error {
   constructor(message: string) {
@@ -23,9 +23,7 @@ function getAdminClient() {
 async function consumeQuota(userId: string, feature: string) {
   const admin = getAdminClient();
 
-  const { data: profile } = await admin.from("profiles").select("plan").eq("id", userId).maybeSingle();
-  const plan = profile?.plan === "pro" ? "pro" : "free";
-  const limit = DAILY_LIMITS[plan];
+  const limit = DAILY_LIMIT;
 
   const { data, error } = await admin.rpc("consume_ai_quota", {
     p_user_id: userId,
@@ -37,9 +35,7 @@ async function consumeQuota(userId: string, feature: string) {
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.allowed) {
     throw new QuotaError(
-      plan === "free"
-        ? `You've used all ${limit} free AI requests for today. They reset at midnight IST, or upgrade to Pro for ${DAILY_LIMITS.pro} a day.`
-        : `You've reached today's limit of ${limit} AI requests. It resets at midnight IST.`
+      `You've used all ${limit} free AI requests for today. They reset at midnight IST.`
     );
   }
 }

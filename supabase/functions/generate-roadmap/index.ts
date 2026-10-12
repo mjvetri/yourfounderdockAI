@@ -1,6 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
+import { runWithQuota } from "../_shared/quota.ts";
 
 // POST body: { ideaId: string, ideaDescription: string, category: 'software' | 'hardware' }
 // Returns: { phases: [{ title, status, items: [{ title, desc, done }] }] }
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
 
     const normalizedCategory = category === "hardware" ? "hardware" : "software";
 
-    const result = await callGeminiJSON(buildPrompt(ideaDescription, normalizedCategory));
+    const result = await runWithQuota(user.id, "generate-roadmap", () => callGeminiJSON(buildPrompt(ideaDescription, normalizedCategory)));
     const phases = Array.isArray(result?.phases) ? result.phases : [];
 
     if (!phases.length) {
