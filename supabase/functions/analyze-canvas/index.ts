@@ -58,10 +58,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    const inputKey = JSON.stringify(data);
+    const { data: canvas, error: canvasError } = await supabase
+      .from("canvases")
+      .select("analysis")
+      .eq("id", canvasId)
+      .eq("user_id", user.id)
+      .single();
+    if (canvasError || !canvas) throw new Error("Canvas not found.");
+
+    if (canvas.analysis?.__inputKey === inputKey) {
+      const { __inputKey, ...cachedAnalysis } = canvas.analysis;
+      return new Response(JSON.stringify({ analysis: cachedAnalysis }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const analysis = await runWithQuota(user.id, "analyze-canvas", () => callGeminiJSON(buildPrompt(type, data)));
     const { error: updateError } = await supabase
       .from("canvases")
-      .update({ analysis, updated_at: new Date().toISOString() })
+      .update({ analysis: { ...analysis, __inputKey: inputKey }, updated_at: new Date().toISOString() })
       .eq("id", canvasId)
       .eq("user_id", user.id);
     if (updateError) throw updateError;
