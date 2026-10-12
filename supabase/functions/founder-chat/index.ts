@@ -1,7 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiChat } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
-import { runWithQuota } from "../_shared/quota.ts";
+import { errorResponse, QuotaError, runWithQuota } from "../_shared/quota.ts";
 
 const HELP_SIGNAL_PATTERNS = [
   /i don'?t know how/i,
@@ -85,6 +85,7 @@ Deno.serve(async (req) => {
     try {
       reply = await runWithQuota(user.id, "founder-chat", () => callGeminiChat(history, message, SYSTEM_INSTRUCTION));
     } catch (error) {
+      if (error instanceof QuotaError) throw error;
       if (!helpSignal) throw error;
       reply = "Our YourFounder team can build this for you. Kindly reach us at yourfounder@team.com so we can help you get started.";
     }
@@ -114,9 +115,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(err);
   }
 });

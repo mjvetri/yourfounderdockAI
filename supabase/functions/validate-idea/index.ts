@@ -1,7 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
-import { runWithQuota } from "../_shared/quota.ts";
+import { errorResponse, runWithQuota } from "../_shared/quota.ts";
 
 // POST body: { ideaId: string, ideaDescription: string }
 // Returns: { verdict, techStack, risks, nextSteps } and persists it
@@ -55,9 +55,6 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return errorResponse(err);
   }
 });

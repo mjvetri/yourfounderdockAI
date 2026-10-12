@@ -1,7 +1,7 @@
 import { corsHeaders, handleOptions } from "../_shared/cors.ts";
 import { callGeminiJSON } from "../_shared/gemini.ts";
 import { getAuthedUser } from "../_shared/auth.ts";
-import { runWithQuota } from "../_shared/quota.ts";
+import { errorResponse, runWithQuota } from "../_shared/quota.ts";
 
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
@@ -25,6 +25,6 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ strategy }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: err instanceof Error ? err.message : "Unexpected error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return errorResponse(err);
   }
 });
