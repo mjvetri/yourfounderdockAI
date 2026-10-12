@@ -13,6 +13,7 @@ const HowItWorksPage = lazy(() => import('./src/app/(landing)/how-it-works/page'
 // Auth Pages
 const LoginPage = lazy(() => import('./src/app/(auth)/login/page'));
 const SignupPage = lazy(() => import('./src/app/(auth)/signup/page'));
+const ResetPasswordPage = lazy(() => import('./src/app/(auth)/reset-password/page'));
 
 // Dashboard Pages
 const DashboardHome = lazy(() => import('./src/app/dashboard/page'));
@@ -45,6 +46,7 @@ const App = () => {
           <Route path="/how-it-works" element={<HowItWorksPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           
           {/* Protected Dashboard Routes */}
           <Route path="/dashboard" element={<RequireAuth><DashboardHome /></RequireAuth>} />

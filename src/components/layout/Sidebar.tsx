@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, Bell, CreditCard, Crown, Eye, FileText, House, KanbanSquare, Lightbulb, Map, MessageSquareText, Rocket, Settings, Target, Users, X } from 'lucide-react';
+import { BarChart3, Bell, CreditCard, Crown, Eye, FileText, House, KanbanSquare, Lightbulb, Map, MessageSquareText, Rocket, Settings, Target, Users, X, type LucideIcon } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { getMyProfile } from '../../lib/api';
 import BrandLogo from '../ui/BrandLogo';
 
 interface SidebarProps { mobileOpen?: boolean; onClose?: () => void; }
+interface NavigationItem { icon: LucideIcon; label: string; path: string; }
+type NavigationSection = [title: string, items: NavigationItem[]];
 
 const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onClose }) => {
   const location = useLocation();
@@ -13,7 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onClose }) => {
   useEffect(() => { getMyProfile().then(setProfile).catch(() => {}); }, []);
   useEffect(() => { onClose?.(); }, [location.pathname]);
 
-  const sections = [
+  const sections: NavigationSection[] = [
     ['Workspace', [
       { icon: House, label: 'Dashboard', path: '/dashboard' },
       { icon: Lightbulb, label: 'Ideas Lab', path: '/dashboard/ideas' },

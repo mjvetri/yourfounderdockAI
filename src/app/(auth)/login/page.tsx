@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
-import { signIn } from '../../../lib/api';
+import { sendPasswordReset, signIn } from '../../../lib/api';
 import BrandLogo from '../../../components/ui/BrandLogo';
 
 const LoginPage = () => {
@@ -10,6 +10,24 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      setError('Enter your email address first.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      await sendPasswordReset(email);
+      setResetSent(true);
+    } catch (err: any) {
+      setError(err?.message || 'Could not send the password reset email.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +65,7 @@ const LoginPage = () => {
                 <span>{error}</span>
               </div>
             )}
+            {resetSent && <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">If an account exists for this address, a password-reset link has been sent.</div>}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700">Email address</label>
               <div className="mt-1 relative">
@@ -74,7 +93,7 @@ const LoginPage = () => {
               </div>
 
               <div className="text-sm">
-                <Link to="#" className="font-medium text-primary-600 hover:text-primary-500">Forgot your password?</Link>
+                <button type="button" onClick={handlePasswordReset} disabled={loading} className="font-medium text-primary-600 hover:text-primary-500 disabled:opacity-50">Forgot your password?</button>
               </div>
             </div>
 

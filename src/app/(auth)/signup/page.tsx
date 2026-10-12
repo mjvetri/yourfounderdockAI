@@ -11,6 +11,7 @@ const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +24,12 @@ const SignupPage = () => {
 
     setLoading(true);
     try {
-      await signUp(email, password, name);
-      navigate('/login');
+      const { session } = await signUp(email, password, name);
+      if (session) {
+        navigate('/dashboard');
+      } else {
+        setConfirmationSent(true);
+      }
     } catch (err: any) {
       setError(err?.message || 'Could not create your account.');
     } finally {
@@ -47,7 +52,11 @@ const SignupPage = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200">
-          <form className="space-y-6" onSubmit={handleSignup}>
+          {confirmationSent ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+              Check <strong>{email}</strong> to confirm your account, then return here to sign in.
+            </div>
+          ) : <form className="space-y-6" onSubmit={handleSignup}>
             {error && (
               <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-md p-3">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -89,7 +98,7 @@ const SignupPage = () => {
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
               </button>
             </div>
-          </form>
+          </form>}
 
           <p className="mt-6 text-center text-xs text-slate-500">
             By clicking "Create Account", you agree to our Terms of Service and Privacy Policy.

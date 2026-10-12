@@ -126,19 +126,35 @@ function MessageContent({ text, sessionId }: { text: string; sessionId: string |
       if (language === 'circuit') {
         try {
           const connections: Connection[] = JSON.parse(code.trim());
-          rendered.push(<CircuitDiagram key={`ckt-${i}`} connections={connections} />);
+          rendered.push(
+            <React.Fragment key={`ckt-${i}`}>
+              <CircuitDiagram connections={connections} />
+            </React.Fragment>
+          );
         } catch {
-          rendered.push(<CodeBlock key={`ckt-err-${i}`} language="circuit" code={code.trim()} />);
+          rendered.push(
+            <React.Fragment key={`ckt-err-${i}`}>
+              <CodeBlock language="circuit" code={code.trim()} />
+            </React.Fragment>
+          );
         }
       } else if (language === 'service-offer') {
         try {
           const { reason } = JSON.parse(code.trim());
-          rendered.push(<ServiceOfferCard key={`offer-${i}`} reason={reason} sessionId={sessionId} />);
+          rendered.push(
+            <React.Fragment key={`offer-${i}`}>
+              <ServiceOfferCard reason={reason} sessionId={sessionId} />
+            </React.Fragment>
+          );
         } catch {
           // Skip malformed service offers rather than showing implementation details.
         }
       } else {
-        rendered.push(<CodeBlock key={`c-${i}`} language={language} code={code.trim()} />);
+        rendered.push(
+          <React.Fragment key={`c-${i}`}>
+            <CodeBlock language={language} code={code.trim()} />
+          </React.Fragment>
+        );
       }
     }
   }
